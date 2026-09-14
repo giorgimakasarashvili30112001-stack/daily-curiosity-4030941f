@@ -7,6 +7,10 @@ import { getArchive } from "@/lib/facts.functions";
 import { FACT_GC_TIME, msUntilUtcMidnight } from "@/lib/cache-time";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
+/**
+ * Query definition for the full archive of past explainers. Cached until
+ * the next UTC midnight, since the archive only grows once per day.
+ */
 const archiveQuery = queryOptions({
   queryKey: ["archive"],
   queryFn: () => getArchive(),
@@ -16,6 +20,13 @@ const archiveQuery = queryOptions({
 });
 
 
+/**
+ * Route: `/archive` — lists every past explainer.
+ * Shows a filterable (by category) list of previously featured facts plus
+ * a live countdown to the next explainer at UTC midnight.
+ * Data: loads `archiveQuery` (all archived facts) via the loader. Public
+ * route, no authentication required.
+ */
 export const Route = createFileRoute("/archive")({
   loader: ({ context }) => context.queryClient.ensureQueryData(archiveQuery),
   head: () => ({
@@ -36,6 +47,7 @@ export const Route = createFileRoute("/archive")({
   component: ArchivePage,
 });
 
+/** Live-updating countdown to the next UTC midnight, when a new fact unlocks. */
 function CountdownNote() {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
@@ -90,6 +102,7 @@ interface CategoryFilterProps {
   onClearFilters: () => void;
 }
 
+/** Horizontally-scrollable pill list for filtering the archive by category. */
 function CategoryFilter({
   categories,
   selectedCategories,
@@ -184,6 +197,7 @@ function CategoryFilter({
   );
 }
 
+/** Archive page component: category filter + list of archived fact links. */
 function ArchivePage() {
   const { data = [] } = useQuery(archiveQuery);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);

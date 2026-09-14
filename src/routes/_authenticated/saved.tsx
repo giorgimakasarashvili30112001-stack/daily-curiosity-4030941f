@@ -7,6 +7,15 @@ import { getSavedFacts } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
 import { FACT_GC_TIME } from "@/lib/cache-time";
 
+/**
+ * Route: `/saved` — signed-in user's library of bookmarked explainers
+ * (requires auth via the `_authenticated` parent route).
+ * Shows a list of saved facts linking to their `/fact/$slug` pages.
+ * Data: fetches `getSavedFacts` server function via `useServerFn`/React
+ * Query, keyed by user id. Kept fresh locally by the save/unsave mutation
+ * elsewhere in the app, so it's cached with `staleTime: Infinity` and never
+ * refetched on revisit.
+ */
 export const Route = createFileRoute("/_authenticated/saved")({
   head: () => ({
     meta: [
@@ -19,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/saved")({
   component: SavedPage,
 });
 
+/** Saved page component: lists the current user's bookmarked facts. */
 function SavedPage() {
   const fetchSaved = useServerFn(getSavedFacts);
   const { user } = useSession();

@@ -1,3 +1,10 @@
+/**
+ * ShareSheet
+ * ----------
+ * File-level: Renders a "Share" button that opens a bottom drawer with
+ * share options (X, Facebook, Messenger, LinkedIn, Instagram, copy link)
+ * plus, when supported, the device's native share sheet.
+ */
 import { Facebook, Instagram, Linkedin, Link2, MessageCircle, Share2, Twitter } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -9,6 +16,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
+// Describes one share destination shown as a grid button in the drawer.
 type ShareTarget = {
   key: string;
   label: string;
@@ -16,8 +24,11 @@ type ShareTarget = {
   onSelect: (ctx: { url: string; text: string }) => void | Promise<void>;
 };
 
+// Opens a URL in a new tab/window without leaking a reference to the opener.
 const open = (href: string) => window.open(href, "_blank", "noopener,noreferrer");
 
+// The list of share targets rendered in the drawer grid, each building its
+// own deep link / share URL, or copying text to the clipboard.
 const targets: ShareTarget[] = [
   {
     key: "x",
@@ -69,7 +80,22 @@ const targets: ShareTarget[] = [
   },
 ];
 
+/**
+ * ShareSheet
+ * A trigger button ("Share") that opens a Drawer with sharing options for
+ * a fact: social platform deep-links, clipboard copy, and (if the
+ * browser/device supports it) the native Web Share API.
+ *
+ * Props:
+ * - title: the fact's title, used as the share dialog heading/native share title.
+ * - text: short text (e.g. hook) included in share messages.
+ * - url: the canonical URL to share.
+ *
+ * No local state; interactions are handled via onClick handlers that call
+ * external APIs (window.open, navigator.clipboard, navigator.share).
+ */
 export function ShareSheet({ title, text, url }: { title: string; text: string; url: string }) {
+  // Invoked by the "More options" button to trigger the OS-native share sheet.
   const onNativeShare = async () => {
     if (!navigator.share) return;
     try {

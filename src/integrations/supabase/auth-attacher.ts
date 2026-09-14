@@ -4,6 +4,14 @@ import { supabase } from './client'
 
 // Must be registered as a global `functionMiddleware` in `src/start.ts`; otherwise
 // the browser never attaches the bearer token to serverFn RPCs.
+/**
+ * Client-side server-function middleware: before every server function
+ * call, reads the current Supabase session from the browser client and
+ * attaches its access token as an `Authorization: Bearer <token>` header on
+ * the outgoing request. This is what lets `requireSupabaseAuth` (the
+ * server-side counterpart) authenticate the caller. Registered globally in
+ * `src/start.ts` via `functionMiddleware`.
+ */
 export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
   async ({ next }) => {
     const { data } = await supabase.auth.getSession()

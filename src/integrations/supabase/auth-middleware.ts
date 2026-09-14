@@ -11,10 +11,12 @@ import {
 
 
 
+/** Detects Supabase's newer opaque `sb_publishable_`/`sb_secret_` key formats. */
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+/** Wraps `fetch` to attach the Supabase `apikey` header correctly for either key format. */
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -35,6 +37,17 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+/**
+ * Server function middleware that enforces authentication and gives the
+ * handler an RLS-scoped Supabase client for the calling user. Reads the
+ * `Authorization: Bearer <access_token>` header (attached automatically on
+ * the client by `auth-attacher.ts`), validates it via
+ * `supabase.auth.getClaims`, and throws an "Unauthorized" error if it's
+ * missing/malformed/invalid. On success, passes `supabase` (a client bound
+ * to that user's token, so queries respect row-level security), `userId`,
+ * and `claims` into the server function's context. Apply this to any
+ * server function that requires a signed-in user.
+ */
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     

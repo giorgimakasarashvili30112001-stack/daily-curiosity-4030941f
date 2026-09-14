@@ -9,6 +9,10 @@ import { isFactSaved } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
 import { FACT_GC_TIME } from "@/lib/cache-time";
 
+/**
+ * Query definition for a single fact by its slug. Marked `staleTime:
+ * Infinity` because published explainers are immutable once written.
+ */
 const factQuery = (slug: string) =>
   queryOptions({
     queryKey: ["fact", slug],
@@ -19,6 +23,15 @@ const factQuery = (slug: string) =>
   });
 
 
+/**
+ * Route: `/fact/$slug` — permalink page for a single explainer (used from
+ * the archive and saved lists, and shareable directly).
+ * Shows the fact content; renders a "not found" view if the slug doesn't
+ * match any fact. Data: loads the fact via `getFactBySlug` server function
+ * in the route loader (throws `notFound()` if missing), and separately
+ * checks whether the fact is saved for the current user (only if signed in).
+ * Public route — readable while signed out; save state requires auth.
+ */
 export const Route = createFileRoute("/fact/$slug")({
   loader: async ({ context, params }) => {
     const result = await context.queryClient.ensureQueryData(factQuery(params.slug));
@@ -45,6 +58,7 @@ export const Route = createFileRoute("/fact/$slug")({
   component: FactPage,
 });
 
+/** Shown when the requested slug doesn't match any fact. */
 function FactNotFound() {
   return (
     <AppShell>
@@ -62,6 +76,7 @@ function FactNotFound() {
   );
 }
 
+/** Renders the fact for the current `:slug` param, including saved state. */
 function FactPage() {
   const { slug } = Route.useParams();
   const { data, isPending } = useQuery(factQuery(slug));

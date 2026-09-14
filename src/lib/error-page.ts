@@ -1,3 +1,17 @@
+/**
+ * Renders the static fallback HTML page shown when the app fails to load
+ * (e.g. from the server entry point on an unrecoverable error), so users
+ * always see something actionable instead of a blank screen.
+ */
+
+/**
+ * Builds the full HTML document for the generic "this page didn't load"
+ * error screen, including inline styles and buttons to retry or go home.
+ *
+ * Params: none.
+ * Returns: a complete HTML document as a string.
+ * Side effects: none (pure string template).
+ */
 export function renderErrorPage(): string {
   return `<!doctype html>
 <html lang="en">

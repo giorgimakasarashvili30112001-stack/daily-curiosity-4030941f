@@ -1,3 +1,11 @@
+/**
+ * StreakCalendar
+ * --------------
+ * File-level: Renders a month calendar (on the Profile page) showing which
+ * days the user answered the daily quiz correctly ("marked" streak days)
+ * and which days they merely saved a fact, with month navigation and
+ * visual "streak bar" styling that highlights consecutive/full-week runs.
+ */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -5,22 +13,36 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getStreakCalendar } from "@/lib/quiz.functions";
 import { StreakIcon } from "./StreakIcon";
 
+// Weekday header labels, Monday-first to match the grid layout below.
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
+/** Formats a Date as a "YYYY-MM" key used for query caching and lookups. */
 function monthKey(date: Date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Returns today's date as an ISO "YYYY-MM-DD" string for highlighting "today". */
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// A contiguous run of calendar-grid cell indices that should be drawn as a
+// connected streak "pill" (optionally a fully-completed week).
 interface StreakSegment {
   startIndex: number;
   endIndex: number;
   isFullWeek?: boolean;
 }
 
+/**
+ * Helper: computes the contiguous visual "streak segments" to render for a
+ * month grid. A segment groups consecutive marked (correct-answer) and/or
+ * saved days that fall within the same week row, so the UI can draw one
+ * connected pill per run instead of separate dots. A segment is flagged
+ * `isFullWeek` when all 7 days of that week were answered correctly
+ * (saved-only days don't count toward a full week, only toward filling
+ * visual gaps).
+ */
 function calculateStreakSegments(cells: (number | null)[], marked: Set<string>, saved: Set<string>, key: string): StreakSegment[] {
   const segments: StreakSegment[] = [];
   let currentStartIndex: number | null = null;
@@ -93,6 +115,28 @@ function calculateStreakSegments(cells: (number | null)[], marked: Set<string>, 
   });
 }
 
+/**
+ * StreakCalendar
+ * Renders a month-by-month calendar grid with Prev/Next controls (Next is
+ * disabled once viewing the current month). Days the user answered
+ * correctly are highlighted as connected "streak" pills (bold red
+ * outline/glow when a full week was completed); days a fact was merely
+ * saved are shown with a light blue background to visually bridge gaps.
+ * Today's cell is ringed for emphasis.
+ *
+ * Props: none.
+ *
+ * State:
+ * - view: the currently displayed month (a Date pinned to its 1st day, UTC).
+ *
+ * Data fetching:
+ * - useQuery(["streak-calendar", monthKey]) calls the `getStreakCalendar`
+ *   server function to fetch which dates in the viewed month were answered
+ *   correctly (`correct`) or saved (`saved`).
+ *
+ * User interactions:
+ * - Previous/Next month buttons change `view` (Next disabled on current month).
+ */
 export function StreakCalendar() {
   const fetchCalendar = useServerFn(getStreakCalendar);
   const now = new Date();

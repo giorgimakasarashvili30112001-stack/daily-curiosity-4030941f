@@ -3,6 +3,13 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
+/**
+ * Global server request middleware: catches any otherwise-unhandled error
+ * thrown while handling a request and returns the app's HTML error page
+ * instead of letting it bubble up as a raw error. Errors that already carry
+ * an HTTP `statusCode` (e.g. intentional redirects/not-found) are re-thrown
+ * untouched so the framework can handle them normally.
+ */
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
@@ -25,6 +32,17 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+/**
+ * TanStack Start configuration entry point. Registers:
+ * - `functionMiddleware: [attachSupabaseAuth]` — runs on every server
+ *   function call, client-side, to attach the current Supabase session's
+ *   bearer token to the request.
+ * - `requestMiddleware: [errorMiddleware, csrfMiddleware]` — runs on every
+ *   incoming server request: catches unhandled errors, then enforces CSRF
+ *   protection specifically for server function calls (defining this file
+ *   opts out of Start's automatic CSRF middleware, so it's re-added here
+ *   explicitly).
+ */
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
   requestMiddleware: [errorMiddleware, csrfMiddleware],

@@ -1,3 +1,10 @@
+/**
+ * FactCard
+ * --------
+ * File-level: Renders the full detail view of a single "daily fact"
+ * explainer — title, hook, intro, numbered steps, a "surprising detail"
+ * callout, and Save/Share actions.
+ */
 import { useEffect, useState, memo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +15,7 @@ import { toggleFavorite, type SavedFact } from "@/lib/user.functions";
 import { ShareSheet } from "@/components/ShareSheet";
 import type { Fact } from "@/lib/facts.functions";
 
+// Props accepted by FactCard.
 interface FactCardProps {
   fact: Fact;
   dateLabel?: string | undefined;
@@ -15,12 +23,43 @@ interface FactCardProps {
   initiallySaved?: boolean;
 }
 
+/**
+ * FactCard
+ * Displays a fact's category, title, hook, intro paragraph, numbered
+ * explanation steps, a highlighted "Wait, really?" surprising-detail box,
+ * and Save/Share buttons plus a permanent link to the fact's page.
+ *
+ * Props:
+ * - fact: the Fact data to render (title, hook, steps, etc).
+ * - dateLabel: optional label (e.g. formatted date) shown next to the category.
+ * - isSignedIn: whether the current user is authenticated (gates saving).
+ * - initiallySaved: whether the fact is already saved, used to seed local state.
+ *
+ * State:
+ * - saved: local optimistic "is this fact saved" flag, kept in sync with
+ *   `initiallySaved` via an effect (e.g. once a saved-state query resolves).
+ *
+ * Data fetching / mutations:
+ * - Uses a React Query `useMutation` wrapping the `toggleFavorite` server
+ *   function to save/unsave the fact, updating the `["saved-facts"]` query
+ *   cache directly on success so the Saved tab reflects the change instantly.
+ *
+ * User interactions:
+ * - Clicking Save toggles the favorite (or redirects to /auth if signed out).
+ * - Renders a ShareSheet button for sharing the fact.
+ * - "Open permanent link" navigates to the fact's dedicated URL.
+ *
+ * Wrapped in React.memo with a custom comparator so it only re-renders when
+ * fact id, isSignedIn, initiallySaved, or dateLabel actually change.
+ */
 export const FactCard = memo(function FactCard({
   fact,
   dateLabel,
   isSignedIn,
   initiallySaved = false,
 }: FactCardProps) {
+  // Optimistic local "saved" flag; re-synced from props once the caller's
+  // saved-state query resolves (see effect below).
   const [saved, setSaved] = useState(initiallySaved);
 
   // Keep in sync once the saved-state query resolves after mount.
@@ -57,6 +96,7 @@ export const FactCard = memo(function FactCard({
     onError: () => toast.error("Could not update your saved list"),
   });
 
+  // Handles the Save button click: requires sign-in, otherwise toggles the favorite.
   const onSave = () => {
     if (!isSignedIn) {
       toast("Sign in to save explainers");

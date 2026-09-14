@@ -1,3 +1,10 @@
+/**
+ * Server functions (TanStack Start `createServerFn`) powering the daily
+ * quiz feature: fetching today's/follow-up questions, grading answers,
+ * persisting attempts for signed-in users, and reporting streak/coin/
+ * calendar stats. Answer submission also drives the streak and coin
+ * economy (via `streak.server`) and writes to `quiz_attempts`/`profiles`.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
@@ -6,6 +13,7 @@ import { z } from "zod";
 /** Hard cap on follow-up questions generated per explainer. */
 export const MAX_QUESTION_INDEX = 9;
 
+/** Today's quiz question plus the explainer it's derived from. */
 export type DailyQuiz = {
   quizDate: string;
   factDate: string;
@@ -17,6 +25,7 @@ export type DailyQuiz = {
   options: string[];
 };
 
+/** A single multiple-choice quiz question tied to a fact. */
 export type QuizQuestion = {
   factId: string;
   questionIndex: number;
@@ -24,6 +33,7 @@ export type QuizQuestion = {
   options: string[];
 };
 
+/** Outcome of grading a quiz answer, optionally including streak/coin deltas. */
 export type QuizResult = {
   questionIndex: number;
   selectedIndex: number;
@@ -38,6 +48,7 @@ export type QuizResult = {
   streakSaved?: boolean;
 };
 
+/** Zod validator/parser shared by the grade/submit answer endpoints. */
 const answerInput = (input: unknown) =>
   z
     .object({
@@ -47,7 +58,17 @@ const answerInput = (input: unknown) =>
     })
     .parse(input);
 
-/** Yesterday's explainer turned into one multiple-choice question. Public. */
+/**
+ * Yesterday's explainer turned into one multiple-choice question. Public
+ * (no auth required).
+ *
+ * How it works: resolves the "fact date" the quiz is based on
+ * (`quizFactDate`) from today's UTC date, then loads (or generates)
+ * question index 0 for that fact via `getQuestionForDate`.
+ * Params: none.
+ * Returns: `DailyQuiz` or `null` if no fact/question is available yet.
+ * Side effects: may write a new question row via `getQuestionForDate`.
+ */
 export const getDailyQuiz = createServerFn({ method: "GET" }).handler(
   async (): Promise<DailyQuiz | null> => {
     const { todayUtc } = await import("./facts.server");
@@ -74,6 +95,11 @@ export const getDailyQuiz = createServerFn({ method: "GET" }).handler(
 /**
  * A follow-up question for the same explainer. Shared by everyone: the first
  * request generates and stores it, parallel requests converge on the same row.
+ *
+ * Params: `{ factId, questionIndex }` (questionIndex bounded by
+ * `MAX_QUESTION_INDEX`).
+ * Returns: `QuizQuestion` or `null` if it couldn't be found/generated.
+ * Side effects: may insert a new question row via `getQuestionForFact`.
  */
 export const getQuizQuestion = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
@@ -96,7 +122,15 @@ export const getQuizQuestion = createServerFn({ method: "POST" })
     };
   });
 
-/** Grades an answer without persisting it (signed-out play). */
+/**
+ * Grades an answer without persisting it — used for signed-out play so
+ * guests can still see whether they were right.
+ *
+ * Params: `{ factId, selectedIndex, questionIndex }`.
+ * Returns: `QuizResult` (without streak/coins fields) or `null` if the
+ * question can't be loaded.
+ * Side effects: none (no DB writes).
+ */
 export const gradeQuizAnswer = createServerFn({ method: "POST" })
   .inputValidator(answerInput)
   .handler(async ({ data }): Promise<QuizResult | null> => {
@@ -112,7 +146,30 @@ export const gradeQuizAnswer = createServerFn({ method: "POST" })
     };
   });
 
-/** Grades and records today's attempt for the signed-in user. */
+/**
+ * Grades and records today's attempt for the signed-in user. This is the
+ * main entry point that drives the streak/coin economy.
+ *
+ * How it works:
+ * 1. Loads the question and computes correctness.
+ * 2. Calls `settleStreak` first (based on pre-answer state) to settle any
+ *    missed days — this may auto-spend coins to "save" a missed day.
+ * 3. Inserts a row into `quiz_attempts`; a unique-constraint violation
+ *    (23505) means the user already answered this question today, in
+ *    which case the previously stored attempt is returned instead.
+ * 4. On a fresh correct answer: awards 1 coin, and — only once per day,
+ *    on the first correct answer — extends the streak (or resets it to 1
+ *    if the previous day wasn't answered), updating `longestStreak` too.
+ * 5. Persists the updated streak/coin/anchor state back to `profiles` via
+ *    `saveProfileRow`.
+ *
+ * Params: `{ factId, selectedIndex, questionIndex }` (auth required).
+ * Returns: `QuizResult` with streak/coin fields populated, or `null` if
+ * the question can't be loaded.
+ * Side effects: inserts into `quiz_attempts`; may update `profiles`
+ * (streak_count, longest_streak, last_seen_date, streak_anchor, coins,
+ * saved_days). Awards coins and grows/resets the streak.
+ */
 export const submitQuizAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(answerInput)
@@ -152,6 +209,8 @@ export const submitQuizAnswer = createServerFn({ method: "POST" })
 
 
     if (error) {
+      // Duplicate insert: re-fetch and return the attempt that already exists
+      // for this question/date rather than double-counting rewards.
       const { data: existing } = await context.supabase
         .from("quiz_attempts")
         .select("selected_index, is_correct")
@@ -213,7 +272,15 @@ export const submitQuizAnswer = createServerFn({ method: "POST" })
     };
   });
 
-/** The user's latest recorded attempt for today, if any. */
+/**
+ * Returns the user's latest recorded attempt for today's fact, if any,
+ * used to restore quiz UI state on reload.
+ *
+ * Params: `{ factId }` (auth required).
+ * Returns: `QuizResult` (with current streak/coins from `profiles`) or
+ * `null` if no attempt exists yet today.
+ * Side effects: read-only DB queries (quiz_attempts, profiles).
+ */
 export const getQuizAttempt = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ factId: z.string().uuid() }).parse(input))
@@ -252,7 +319,15 @@ export const getQuizAttempt = createServerFn({ method: "GET" })
     };
   });
 
-/** Correct-answer days and coin-saved days in the given month. */
+/**
+ * Returns which days in a given month had a correct answer and which
+ * days were auto-saved with coins, for the streak calendar UI.
+ *
+ * Params: `{ month }` — "YYYY-MM" string (auth required).
+ * Returns: `{ correct: string[], saved: string[] }` — deduplicated date
+ * strings within the month.
+ * Side effects: read-only DB queries (quiz_attempts, profiles.saved_days).
+ */
 export const getStreakCalendar = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -291,7 +366,14 @@ export const getStreakCalendar = createServerFn({ method: "GET" })
   });
 
 
-/** Lifetime quiz stats for the signed-in user. */
+/**
+ * Returns lifetime quiz stats (answered/correct counts plus current
+ * streak/coin state) for the signed-in user, used on the profile page.
+ *
+ * Params: none (auth required).
+ * Returns: `{ answered, correct, streak, longestStreak, coins }`.
+ * Side effects: read-only DB queries (quiz_attempts, profiles).
+ */
 export const getQuizStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(

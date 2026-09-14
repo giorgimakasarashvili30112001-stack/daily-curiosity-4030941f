@@ -6,6 +6,13 @@ import { useSession } from "@/hooks/useSession";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 
+/**
+ * Route: `/auth` — sign in / sign up screen.
+ * Shows an email+password form (toggle between sign-in and sign-up modes)
+ * and a "Continue with Google" OAuth button. No loader data — all state is
+ * client-side. If a user is already signed in, redirects to `/` on mount.
+ * Public route (must be reachable while signed out).
+ */
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
@@ -24,6 +31,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+/**
+ * Auth page component. Talks directly to the Supabase browser client
+ * (`supabase.auth.signUp` / `signInWithPassword` / `signInWithOAuth`) since
+ * auth itself doesn't go through server functions. Redirects to `/` once a
+ * session exists.
+ */
 function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
