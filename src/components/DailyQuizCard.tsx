@@ -1,3 +1,11 @@
+/**
+ * DailyQuizCard
+ * -------------
+ * File-level: Renders the "yesterday's check" daily quiz widget shown on the
+ * home page — a multiple-choice question about the previous day's fact,
+ * with answer grading, streak/coin rewards for signed-in users, follow-up
+ * questions, and guest support via sessionStorage persistence.
+ */
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,8 +25,47 @@ import {
 } from "@/lib/quiz.functions";
 import { STREAK_SAVE_COST } from "@/lib/quiz.constants";
 
+// Builds the sessionStorage key used to persist a guest's answer for a
+// given quiz date + question index (guests aren't tracked server-side).
 const storageKey = (date: string, index: number) => `daily-quiz-${date}-${index}`;
 
+/**
+ * DailyQuizCard
+ * Shows the daily quiz question (and any answered follow-up questions) as
+ * a set of selectable options; after answering, reveals correctness,
+ * an explanation, coin/streak rewards (signed-in users), and a "try
+ * another question" or "revisit fact" action.
+ *
+ * Props:
+ * - isSignedIn: whether the current user is authenticated. Controls
+ *   whether answers are persisted server-side (via submitQuizAnswer) and
+ *   whether coins/streak are shown, vs. graded client-session-only for
+ *   guests (via gradeQuizAnswer + sessionStorage).
+ *
+ * State:
+ * - questionIndex: which question (0 = main daily quiz, >0 = follow-ups) is showing.
+ * - result: the graded QuizResult for the current question, or null if unanswered.
+ * - busy: true while an answer submission/grading request is in flight.
+ * - loadingNext: true while fetching the next follow-up question.
+ *
+ * Data fetching:
+ * - useQuery(["daily-quiz"]) loads today's quiz via getDailyQuiz.
+ * - useQuery(["quiz-question", factId, questionIndex]) lazily loads
+ *   follow-up questions (index > 0) via getQuizQuestion, shared across users.
+ * - Prefetches the next question in the background for snappier "try
+ *   another question" transitions.
+ * - On mount, restores prior progress: for signed-in users via
+ *   getQuizAttempt; for guests via sessionStorage entries keyed by date/index.
+ *
+ * User interactions:
+ * - Selecting an option submits/grades the answer (submitQuizAnswer or
+ *   gradeQuizAnswer) and shows the result, invalidating profile/quiz-stats/
+ *   streak-calendar queries and syncing reminders for signed-in users.
+ * - "Try another question" (shown after a wrong, non-final answer) loads
+ *   the next follow-up question.
+ * - "Revisit {fact title}" links back to the full fact page.
+ * - "Sign in to track your score" (guests only) navigates to /auth.
+ */
 export function DailyQuizCard({ isSignedIn }: { isSignedIn: boolean }) {
   const fetchQuiz = useServerFn(getDailyQuiz);
   const fetchAttempt = useServerFn(getQuizAttempt);
@@ -108,6 +155,8 @@ export function DailyQuizCard({ isSignedIn }: { isSignedIn: boolean }) {
         ? { prompt: followUp.prompt, options: followUp.options }
         : null;
 
+  // Handles selecting an answer option: submits/grades it, updates result
+  // state, and (signed-in) triggers cache invalidation + reminder sync.
   const onAnswer = async (index: number) => {
     if (result || busy) return;
     setBusy(true);
@@ -141,6 +190,8 @@ export function DailyQuizCard({ isSignedIn }: { isSignedIn: boolean }) {
     }
   };
 
+  // Handles the "Try another question" click: fetches (or reuses a
+  // prefetched) follow-up question and resets the answer state for it.
   const onNextQuestion = async () => {
     if (loadingNext || questionIndex >= MAX_QUESTION_INDEX) return;
     const nextIndex = questionIndex + 1;
@@ -167,6 +218,8 @@ export function DailyQuizCard({ isSignedIn }: { isSignedIn: boolean }) {
     }
   };
 
+  // Only offer a retry via a new question when the current answer was wrong
+  // and there are more follow-up questions available.
   const canRetry = !!result && !result.isCorrect && questionIndex < MAX_QUESTION_INDEX;
 
   return (

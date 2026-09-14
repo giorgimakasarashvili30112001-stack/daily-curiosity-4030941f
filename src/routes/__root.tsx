@@ -14,6 +14,10 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 
+/**
+ * Rendered by the router for any URL that doesn't match a route (TanStack
+ * Router's global 404 fallback). Purely presentational — no data loading.
+ */
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -36,6 +40,11 @@ function NotFoundComponent() {
   );
 }
 
+/**
+ * Root-level error boundary. Rendered when a route's loader/component throws.
+ * Reports the error to the Lovable error-tracking pipeline and offers the
+ * user a way to retry (re-run loaders) or bail out to the home page.
+ */
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
@@ -74,6 +83,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+/**
+ * Root route for the whole app. Not tied to a URL segment itself — every
+ * other route renders inside it via <Outlet />. Declares the shared
+ * `queryClient` context (created in src/router.tsx) that all routes can use
+ * for loader data fetching, plus the default <head> tags/meta and the
+ * document shell (html/head/body) used for SSR.
+ */
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -122,6 +138,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 
+/**
+ * Outermost HTML document shell used during SSR (and hydration). Wraps the
+ * rendered route tree with <html>/<head>/<body>, injecting collected <head>
+ * tags via <HeadContent /> and the client-side hydration script via <Scripts />.
+ */
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
@@ -136,6 +157,15 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Root component rendered inside the shell. Sets up the React Query
+ * provider for the whole app and listens to Supabase auth state changes:
+ * on sign-in/sign-out/user-update it invalidates the router (so route
+ * `beforeLoad`/loaders re-run) and clears cached user-specific queries
+ * (profile, saved facts, quiz stats, streak calendar, per-fact saved state).
+ * Shared content queries (today's fact, archive) are left untouched since
+ * they don't depend on the signed-in user.
+ */
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();

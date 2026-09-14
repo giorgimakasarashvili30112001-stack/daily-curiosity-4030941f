@@ -1,3 +1,11 @@
+/**
+ * useDailyReminders
+ * ------------------
+ * File-level: Hook that manages the native app's daily reminder
+ * notifications (scheduled around 11:00 / 19:00), keeping their enabled
+ * state in sync with user preference, app visibility changes, and the
+ * user's streak progress.
+ */
 import { useCallback, useEffect, useState } from "react";
 import {
   isNativeApp,

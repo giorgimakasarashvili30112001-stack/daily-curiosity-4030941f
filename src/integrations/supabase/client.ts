@@ -7,10 +7,16 @@ import {
 } from './config';
 
 
+/** Detects Supabase's newer opaque `sb_publishable_`/`sb_secret_` key formats. */
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+/**
+ * Wraps `fetch` to always attach the Supabase `apikey` header, and to strip
+ * an incorrectly-set `Authorization: Bearer <anon key>` header when using
+ * the newer opaque key format (which isn't a valid bearer JWT).
+ */
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -32,6 +38,12 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+/**
+ * Builds the browser/anon-key Supabase client, reading the URL/key from Vite
+ * env vars on the client or process env on the server, falling back to the
+ * checked-in defaults in `./config`. Uses `localStorage` for session
+ * persistence when running in the browser (undefined during SSR).
+ */
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -73,8 +85,17 @@ function createSupabaseClient() {
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+/**
+ * The app-wide Supabase client for use in browser/shared code (auth,
+ * anon-key/RLS-scoped queries). Lazily instantiated on first property
+ * access via a Proxy so importing this module has no side effects until
+ * it's actually used. This is the client used by route components (e.g.
+ * sign-in, auth state listeners) — for privileged server-only queries that
+ * bypass RLS, use `client.server.ts`'s `supabaseAdmin` instead.
+ *
+ * Import the supabase client like this:
+ * import { supabase } from "@/integrations/supabase/client";
+ */
 export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
   get(_, prop, receiver) {
     if (!_supabase) _supabase = createSupabaseClient();

@@ -11,6 +11,10 @@ import { getProfile, isFactSaved } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
 import { FACT_GC_TIME, msUntilUtcMidnight } from "@/lib/cache-time";
 
+/**
+ * Query definition for today's featured fact. Cached until the next UTC
+ * midnight (when a new fact is published), matching the daily content cadence.
+ */
 const todayQuery = queryOptions({
   queryKey: ["today-fact"],
   queryFn: () => getTodayFact(),
@@ -19,6 +23,15 @@ const todayQuery = queryOptions({
 });
 
 
+/**
+ * Route: `/` — the app's home page / "Today" screen.
+ * Shows today's explainer (fact) plus the daily quiz card.
+ * Data: loads `todayQuery` (today's fact) via the loader so it's ready
+ * before render; additionally fetches the signed-in user's profile (for
+ * streak) and whether the fact is already saved, both only when a user is
+ * logged in. Public route — viewable signed out, but streak/save state and
+ * the "keep your streak" CTA only show for authenticated users.
+ */
 export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(todayQuery),
   head: () => ({
@@ -39,6 +52,7 @@ export const Route = createFileRoute("/")({
   component: TodayPage,
 });
 
+/** Home page component: renders today's fact, quiz, sign-in CTA, and archive link. */
 function TodayPage() {
   const { data } = useQuery(todayQuery);
   const { user } = useSession();

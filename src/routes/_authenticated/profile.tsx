@@ -15,6 +15,15 @@ import { getProfile, updateDisplayName } from "@/lib/user.functions";
 import { getQuizStats } from "@/lib/quiz.functions";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Route: `/profile` — signed-in user's profile screen (requires auth via
+ * the `_authenticated` parent route, which redirects to `/auth` otherwise).
+ * Shows streak, longest streak, coins, quiz stats, a streak calendar,
+ * daily reminder toggle, an editable display name, and sign out.
+ * Data: fetches `getProfile` and `getQuizStats` server functions via
+ * `useServerFn`/React Query (auth-bound; the Supabase bearer token is
+ * attached automatically by the auth-attacher middleware).
+ */
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
@@ -27,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
+/** Profile page component: streak/coin stats, name editing, sign-out, reminders. */
 function ProfilePage() {
   const fetchProfile = useServerFn(getProfile);
   const fetchQuizStats = useServerFn(getQuizStats);
@@ -158,6 +168,7 @@ function ProfilePage() {
   );
 }
 
+/** Toggle for enabling/disabling scheduled local daily reminder notifications. */
 function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null }) {
   const { enabled, status, toggle } = useDailyReminders(lastCorrectDate);
   const [busy, setBusy] = useState(false);

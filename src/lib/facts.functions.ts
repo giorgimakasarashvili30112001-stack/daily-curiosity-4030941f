@@ -1,8 +1,17 @@
+/**
+ * Server functions (TanStack Start `createServerFn`) exposing the public
+ * "explainer" (fact) content to the client: today's fact, the archive of
+ * past facts, and lookup by slug. All handlers are read-only from the
+ * client's point of view, though `getTodayFact` may trigger background
+ * generation of new facts when the library is running low.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+/** One step in the "how it works" walkthrough of an explainer. */
 export type FactStep = { heading: string; body: string };
 
+/** Shape of a single daily explainer as sent to the client. */
 export type Fact = {
   id: string;
   title: string;
@@ -14,6 +23,7 @@ export type Fact = {
   surprising_detail: string;
 };
 
+/** A row in the public archive list (facts already featured on a past date). */
 export type ArchiveEntry = {
   pick_date: string;
   slug: string;
@@ -22,6 +32,26 @@ export type ArchiveEntry = {
   hook: string;
 };
 
+/**
+ * Returns today's featured explainer, generating/backfilling the fact
+ * library in the background if it's running low.
+ *
+ * How it works:
+ * - Computes today's UTC date and asks `ensureDailyPick` for the fact
+ *   assigned to that date (assigning one if none exists yet).
+ * - If no fact could be picked (library exhausted), it eagerly calls
+ *   `topUpFacts` to generate more, then retries the pick once, without
+ *   ever throwing to the caller.
+ * - If a fact was found but the unused pool is getting low (<15), it
+ *   kicks off `topUpFacts` in the background ("fire and forget") so the
+ *   next call isn't blocked.
+ *
+ * Params: none.
+ * Returns: `{ date, fact }` where `fact` is `null` only if generation
+ * failed and there really is nothing to show.
+ * Side effects: may write new fact rows to the DB via `topUpFacts`/
+ * `ensureDailyPick`; logs (does not throw) on generation failure.
+ */
 export const getTodayFact = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ date: string; fact: Fact | null }> => {
     const { ensureDailyPick, todayUtc, topUpFacts, countUnusedFacts } = await import(
@@ -47,6 +77,15 @@ export const getTodayFact = createServerFn({ method: "GET" }).handler(
   },
 );
 
+/**
+ * Returns up to 120 past explainers (most recent first) that have already
+ * been featured (i.e. have a `pick_date` on or before today), for the
+ * public archive page.
+ *
+ * Params: none.
+ * Returns: array of `ArchiveEntry`, empty if the query returns nothing.
+ * Side effects: read-only DB query against `facts` via the admin client.
+ */
 export const getArchive = createServerFn({ method: "GET" }).handler(
   async (): Promise<ArchiveEntry[]> => {
     const { dbAdmin: supabaseAdmin } = await import("./db.server");
@@ -70,6 +109,16 @@ export const getArchive = createServerFn({ method: "GET" }).handler(
   },
 );
 
+/**
+ * Looks up a single explainer by its slug, for the fact detail page.
+ *
+ * Params: `{ slug }` — validated non-empty string.
+ * Returns: `{ fact, pickDate }` if the fact exists and has already been
+ * featured (pick_date set and not in the future); otherwise `null`.
+ * Side effects: read-only DB query via the admin client. Only explainers
+ * that have already appeared as "today's fact" are publicly readable —
+ * this hides unpublished/future facts from direct slug lookup.
+ */
 export const getFactBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1) }).parse(input))
   .handler(async ({ data }): Promise<{ fact: Fact; pickDate: string | null } | null> => {
@@ -90,4 +139,3 @@ export const getFactBySlug = createServerFn({ method: "GET" })
     const record = row as Record<string, unknown>;
     return { fact: toFact(record), pickDate: String(record["pick_date"]) };
   });
-

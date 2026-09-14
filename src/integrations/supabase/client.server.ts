@@ -7,10 +7,16 @@ import type { Database } from './types';
 import { SUPABASE_URL as DEFAULT_SUPABASE_URL } from './config';
 
 
+/** Detects Supabase's newer opaque `sb_publishable_`/`sb_secret_` key formats. */
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+/**
+ * Wraps `fetch` to always attach the Supabase `apikey` header, stripping an
+ * incorrect `Authorization: Bearer <key>` header for the newer opaque key
+ * format.
+ */
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -31,6 +37,12 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+/**
+ * Builds the privileged, service-role Supabase client. Reads
+ * SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY from process env (server-only —
+ * this key must never reach the browser bundle). Session persistence and
+ * token refresh are disabled since this client isn't tied to any one user.
+ */
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['SUPABASE_URL'] || process.env['SB_URL'] || DEFAULT_SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SB_SERVICE_ROLE_KEY'];

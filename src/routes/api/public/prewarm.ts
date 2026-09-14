@@ -31,6 +31,14 @@ async function handle(request: Request): Promise<Response> {
   }
 }
 
+/**
+ * Route: `GET|POST /api/public/prewarm` — server-only API endpoint (no UI).
+ * Not authenticated via Supabase user sessions; instead requires a bearer
+ * secret (PREWARM_SECRET or the service role key) in the Authorization
+ * header, intended to be called by a scheduled job (e.g. pg_cron). On
+ * success it generates/persists tomorrow's fact + quiz question via
+ * `prewarmTomorrow()`.
+ */
 export const Route = createFileRoute("/api/public/prewarm")({
   server: {
     handlers: {

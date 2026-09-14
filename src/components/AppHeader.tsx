@@ -1,6 +1,25 @@
+/**
+ * AppHeader
+ * ---------
+ * File-level: Page header shown at the top of each screen. Displays the app
+ * logo/name (linking home), a small eyebrow label describing the current
+ * page, and an optional streak badge.
+ */
 import { Link } from "@tanstack/react-router";
 import { StreakIcon } from "./StreakIcon";
 
+/**
+ * AppHeader
+ * Renders the app wordmark (links to "/"), an uppercase eyebrow label for
+ * the current page, and — when the user has an active streak — a pill
+ * badge with the StreakIcon and streak count.
+ *
+ * Props:
+ * - eyebrow: small uppercase label describing the current page/section.
+ * - streak: optional current streak count; badge is hidden when null/0.
+ *
+ * No local state or data fetching.
+ */
 export function AppHeader({
   eyebrow,
   streak,

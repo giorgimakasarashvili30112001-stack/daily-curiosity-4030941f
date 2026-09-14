@@ -1,8 +1,15 @@
+/**
+ * Server functions (TanStack Start `createServerFn`) for the signed-in
+ * user's profile and saved-facts ("favorites") features: reading profile
+ * state (which also settles streak bookkeeping), updating the display
+ * name, and listing/toggling saved facts.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 
+/** Profile summary shown on the account/profile screen. */
 export type ProfileState = {
   displayName: string | null;
   streak: number;
@@ -14,6 +21,7 @@ export type ProfileState = {
 };
 
 
+/** A fact the user has bookmarked, with the timestamp it was saved. */
 export type SavedFact = {
   slug: string;
   title: string;
@@ -22,6 +30,16 @@ export type SavedFact = {
   savedAt: string;
 };
 
+/**
+ * Loads the signed-in user's profile state, settling any missed streak
+ * days as a side effect (via `settleStreak`), and counts their saved
+ * facts.
+ *
+ * Params: none (auth required).
+ * Returns: `ProfileState & { savedCount }`.
+ * Side effects: `settleStreak` may auto-spend coins to save a missed day
+ * and update `profiles` (streak_count, coins, saved_days, etc.).
+ */
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ProfileState & { savedCount: number }> => {
@@ -49,6 +67,14 @@ export const getProfile = createServerFn({ method: "GET" })
 
 
 
+/**
+ * Updates (or clears) the signed-in user's display name.
+ *
+ * Params: `{ displayName }` — trimmed; an empty string clears the name
+ * (stored as `null`).
+ * Returns: `{ ok: true }`.
+ * Side effects: upserts a row in `profiles` (display_name, updated_at).
+ */
 export const updateDisplayName = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ displayName: z.string().max(60) }).parse(input))
@@ -64,6 +90,13 @@ export const updateDisplayName = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Lists the signed-in user's saved facts, most recently saved first.
+ *
+ * Params: none (auth required).
+ * Returns: `SavedFact[]` (rows whose joined fact is missing are dropped).
+ * Side effects: read-only DB query joining `favorites` to `facts`.
+ */
 export const getSavedFacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SavedFact[]> => {
@@ -83,6 +116,13 @@ export const getSavedFacts = createServerFn({ method: "GET" })
       .filter((row): row is SavedFact => row !== null);
   });
 
+/**
+ * Checks whether a given fact is already saved by the signed-in user.
+ *
+ * Params: `{ factId }` (auth required).
+ * Returns: `{ saved: boolean }`.
+ * Side effects: read-only DB query against `favorites`.
+ */
 export const isFactSaved = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ factId: z.string().uuid() }).parse(input))
@@ -95,6 +135,14 @@ export const isFactSaved = createServerFn({ method: "GET" })
     return { saved: !!row };
   });
 
+/**
+ * Saves or un-saves a fact for the signed-in user (toggle behavior based
+ * on current state).
+ *
+ * Params: `{ factId }` (auth required).
+ * Returns: `{ saved: boolean }` reflecting the new state.
+ * Side effects: inserts into or deletes from `favorites`.
+ */
 export const toggleFavorite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ factId: z.string().uuid() }).parse(input))

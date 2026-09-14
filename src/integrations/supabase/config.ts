@@ -2,6 +2,8 @@
 // These values are safe to ship in client code: the publishable (anon) key is
 // protected by row-level security. Environment variables still take precedence.
 
+// Default project id / URL / anon key, used when no environment variables
+// override them (see client.ts / client.server.ts / auth-middleware.ts).
 export const SUPABASE_PROJECT_ID = 'ktnayycclukcwfupsdiz';
 export const SUPABASE_URL = 'https://ktnayycclukcwfupsdiz.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY =
