@@ -69,6 +69,10 @@ if (typeof globalThis.addEventListener === "function") {
   );
 }
 
+/**
+ * Returns (and clears) the most recently captured error if it happened within
+ * the 5s TTL, so server.ts can attach a real stack to an opaque 500 response.
+ */
 export function consumeLastCapturedError(): unknown {
   if (!lastCapturedError) return undefined;
   if (Date.now() - lastCapturedError.at > TTL_MS) {

@@ -37,6 +37,11 @@ const PERMISSIONS_POLICY = [
   "xr-spatial-tracking=()",
 ].join(", ");
 
+/**
+ * Copies an HTML response and adds the security headers (CSP, frame, MIME,
+ * referrer, HSTS, permissions policy). Non-HTML responses pass through
+ * untouched so assets and JSON payloads are not rewritten.
+ */
 export function applySecurityHeaders(response: Response): Response {
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("text/html")) return response;

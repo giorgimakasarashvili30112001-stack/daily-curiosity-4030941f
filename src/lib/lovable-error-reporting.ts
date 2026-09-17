@@ -1,4 +1,12 @@
+/**
+ * lovable-error-reporting.ts
+ * -------------------------
+ * File-level: Browser-only bridge that forwards errors caught by React error
+ * boundaries to the Lovable editor's telemetry hooks, so preview sessions show
+ * the real failure instead of a silent blank screen.
+ */
 type LovableErrorOptions = {
+
   mechanism?: "manual" | "onerror" | "unhandledrejection" | "react_error_boundary";
   handled?: boolean;
   severity?: "error" | "warning" | "info";
