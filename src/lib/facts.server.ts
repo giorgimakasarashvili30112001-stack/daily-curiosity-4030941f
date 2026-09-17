@@ -1,7 +1,17 @@
+/**
+ * facts.server.ts
+ * ---------------
+ * File-level: Server-only helpers for the explainer ("fact") library. Owns the
+ * shared Fact shape, the row -> Fact mapper, the daily-pick scheduler, and the
+ * AI top-up routine that keeps the unused-fact pool stocked. Uses the Supabase
+ * admin client, so it must never be imported by client code.
+ */
 import { dbAdmin as supabaseAdmin } from "./db.server";
 
+/** One numbered step of an explainer: a short heading plus its explanation. */
 export type FactStep = { heading: string; body: string };
 
+/** A single explainer as the UI consumes it (already normalized from a DB row). */
 export type Fact = {
   id: string;
   title: string;
@@ -13,13 +23,25 @@ export type Fact = {
   surprising_detail: string;
 };
 
+/**
+ * The exact column list every fact read requests — keeps queries narrow so the
+ * database never ships columns the UI does not render.
+ */
 export const FACT_COLUMNS =
   "id, title, slug, category, hook, intro, steps, surprising_detail";
 
+/**
+ * Today's date in UTC as `YYYY-MM-DD`. UTC (not device time) is the scheduling
+ * key so every user worldwide is served the same daily explainer.
+ */
 export function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Coerces the JSON `steps` column into a clean FactStep[]: drops non-objects,
+ * stringifies heading/body, and removes entries that are entirely empty.
+ */
 function normalizeSteps(value: unknown): FactStep[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -28,6 +50,10 @@ function normalizeSteps(value: unknown): FactStep[] {
     .filter((s) => s.heading || s.body);
 }
 
+/**
+ * Maps a raw `facts` table row to the strongly typed `Fact` used by routes and
+ * components, normalizing the JSON steps array along the way.
+ */
 export function toFact(row: Record<string, unknown>): Fact {
   return {
     id: String(row["id"]),
@@ -41,6 +67,10 @@ export function toFact(row: Record<string, unknown>): Fact {
   };
 }
 
+/**
+ * Builds a URL-safe slug from a title: lowercased, non-alphanumerics collapsed
+ * to dashes, trimmed of edge dashes, capped at 80 characters.
+ */
 function slugify(title: string): string {
   return title
     .toLowerCase()
@@ -49,6 +79,10 @@ function slugify(title: string): string {
     .slice(0, 80);
 }
 
+/**
+ * Counts facts that have never been scheduled (`pick_date IS NULL`) — the size
+ * of the pool still available for future days. Drives `topUpFacts`.
+ */
 export async function countUnusedFacts(): Promise<number> {
   const { count } = await supabaseAdmin
     .from("facts")
@@ -56,6 +90,7 @@ export async function countUnusedFacts(): Promise<number> {
     .is("pick_date", null);
   return count ?? 0;
 }
+
 
 /** Returns the fact scheduled for `date`, scheduling one if none exists yet. */
 export async function ensureDailyPick(date: string): Promise<Fact | null> {
