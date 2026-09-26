@@ -180,11 +180,15 @@ export async function generateQuestion(
 }
 
 async function loadFact(factDate: string): Promise<{ fact: FactLike; slug: string } | null> {
-  const { data } = await supabaseAdmin
+  // Use the pick for `factDate`, or the most recent earlier one if that day was
+  // never scheduled (no one opened the app), so the quiz is always available.
+  const { data: rows } = await supabaseAdmin
     .from("facts")
     .select("id, slug, title, intro, steps, surprising_detail")
-    .eq("pick_date", factDate)
-    .maybeSingle();
+    .lte("pick_date", factDate)
+    .order("pick_date", { ascending: false })
+    .limit(1);
+  const data = rows?.[0];
 
   const raw = data as Record<string, unknown> | null | undefined;
   if (!raw) return null;
