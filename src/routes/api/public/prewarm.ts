@@ -5,10 +5,31 @@ import { createFileRoute } from "@tanstack/react-router";
  * Call it once a day (e.g. pg_cron) with:
  *   Authorization: Bearer <SB_SERVICE_ROLE_KEY>
  */
-async function handle(request: Request): Promise<Response> {
+/**
+ * Accepts the call when the bearer token matches the env secret
+ * (PREWARM_SECRET / SB_SERVICE_ROLE_KEY) or the database-generated token the
+ * daily pg_cron job sends (verified via the service-role-only
+ * `verify_cron_token` function — see DAILY_SCHEDULER_SETUP.sql).
+ */
+async function isAuthorized(provided: string): Promise<boolean> {
+  if (!provided) return false;
   const secret = process.env["PREWARM_SECRET"] ?? process.env["SB_SERVICE_ROLE_KEY"] ?? "";
+  if (secret && provided === secret) return true;
+  try {
+    const { dbAdmin } = await import("@/lib/db.server");
+    const { data, error } = await dbAdmin.rpc("verify_cron_token", {
+      p_name: "prewarm",
+      p_token: provided,
+    });
+    return !error && data === true;
+  } catch {
+    return false;
+  }
+}
+
+async function handle(request: Request): Promise<Response> {
   const provided = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (!secret || provided !== secret) {
+  if (!(await isAuthorized(provided))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "content-type": "application/json" },
