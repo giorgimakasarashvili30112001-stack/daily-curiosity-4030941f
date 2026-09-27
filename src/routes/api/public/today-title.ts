@@ -52,8 +52,8 @@ async function handle(): Promise<Response> {
  * Route: `GET /api/public/today-title` — public, unauthenticated, CORS-open
  * JSON API endpoint (no UI). Consumed by native home-screen widgets
  * (Android AppWidget / iOS WidgetKit) that can't run the full web app.
- * Data: queries today's fact (title/category/slug) directly via the
- * server-only admin Supabase client (`dbAdmin`, bypasses RLS). Response is
+ * Data: queries today's fact (title/category/slug) directly via the shared
+ * Supabase client from `@/integrations/supabase/client`. Response is
  * cached for 5 minutes (`cache-control: public, max-age=300`).
  */
 export const Route = createFileRoute("/api/public/today-title")({
