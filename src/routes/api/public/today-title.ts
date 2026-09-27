@@ -12,10 +12,10 @@ async function handle(): Promise<Response> {
   };
 
   try {
-    const { dbAdmin } = await import("@/lib/db.server");
+    const { supabase } = await import("@/integrations/supabase/client");
     const date = new Date().toISOString().slice(0, 10);
 
-    const { data, error } = await dbAdmin
+    const { data, error } = await supabase
       .from("facts")
       .select("title, category, slug, pick_date")
       .eq("pick_date", date)
@@ -52,8 +52,8 @@ async function handle(): Promise<Response> {
  * Route: `GET /api/public/today-title` — public, unauthenticated, CORS-open
  * JSON API endpoint (no UI). Consumed by native home-screen widgets
  * (Android AppWidget / iOS WidgetKit) that can't run the full web app.
- * Data: queries today's fact (title/category/slug) directly via the
- * server-only admin Supabase client (`dbAdmin`, bypasses RLS). Response is
+ * Data: queries today's fact (title/category/slug) directly via the shared
+ * Supabase client from `@/integrations/supabase/client`. Response is
  * cached for 5 minutes (`cache-control: public, max-age=300`).
  */
 export const Route = createFileRoute("/api/public/today-title")({
