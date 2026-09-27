@@ -53,7 +53,9 @@ function createSupabaseClient() {
     process.env['SUPABASE_URL'] ||
     process.env['SB_URL'] ||
     DEFAULT_SUPABASE_URL;
+  // Browser client uses ONLY the public anon key — never a service-role key.
   const SUPABASE_PUBLISHABLE_KEY =
+    import.meta.env['VITE_SUPABASE_ANON_KEY'] ||
     import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
     import.meta.env['VITE_SB_PUBLISHABLE_KEY'] ||
     process.env['SUPABASE_PUBLISHABLE_KEY'] ||
