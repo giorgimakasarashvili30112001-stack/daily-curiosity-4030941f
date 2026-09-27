@@ -16,8 +16,8 @@ async function isAuthorized(provided: string): Promise<boolean> {
   const secret = process.env["PREWARM_SECRET"] ?? process.env["SB_SERVICE_ROLE_KEY"] ?? "";
   if (secret && provided === secret) return true;
   try {
-    const { dbAdmin } = await import("@/lib/db.server");
-    const { data, error } = await dbAdmin.rpc("verify_cron_token", {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data, error } = await supabase.rpc("verify_cron_token", {
       p_name: "prewarm",
       p_token: provided,
     });

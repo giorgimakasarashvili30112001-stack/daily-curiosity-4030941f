@@ -12,10 +12,10 @@ async function handle(): Promise<Response> {
   };
 
   try {
-    const { dbAdmin } = await import("@/lib/db.server");
+    const { supabase } = await import("@/integrations/supabase/client");
     const date = new Date().toISOString().slice(0, 10);
 
-    const { data, error } = await dbAdmin
+    const { data, error } = await supabase
       .from("facts")
       .select("title, category, slug, pick_date")
       .eq("pick_date", date)
