@@ -6,7 +6,7 @@
  * AI top-up routine that keeps the unused-fact pool stocked. Uses the Supabase
  * admin client, so it must never be imported by client code.
  */
-import { dbAdmin as supabaseAdmin } from "./db.server";
+import { supabase as supabaseAdmin } from "@/integrations/supabase/client";
 
 /** One numbered step of an explainer: a short heading plus its explanation. */
 export type FactStep = { heading: string; body: string };

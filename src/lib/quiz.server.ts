@@ -1,4 +1,4 @@
-import { dbAdmin as supabaseAdmin } from "./db.server";
+import { supabase as supabaseAdmin } from "@/integrations/supabase/client";
 
 export type QuizQuestionRow = {
   id: string;
