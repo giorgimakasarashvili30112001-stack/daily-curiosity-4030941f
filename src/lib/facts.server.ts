@@ -7,15 +7,10 @@
  * admin client, so it must never be imported by client code.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin as serverClient } from "@/integrations/supabase/client.server";
 
-import { supabase } from "@/integrations/supabase/client";
-
-/**
- * Loosely typed view of the shared client. The generated `Database` types are
- * stale (they predate columns such as `facts.pick_date`), so server-side
- * queries cast away the strict table types.
- */
-const supabaseAdmin = supabase as unknown as SupabaseClient;
+/** Generated types predate `facts.pick_date`; these queries use the server-only client. */
+const supabaseAdmin = serverClient as unknown as SupabaseClient;
 
 /** One numbered step of an explainer: a short heading plus its explanation. */
 export type FactStep = { heading: string; body: string };

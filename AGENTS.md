@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+Daily content selection, generation, and quiz persistence use the server-only privileged client; the public client is read-only for shared content, so published content cannot be changed by visitors.
