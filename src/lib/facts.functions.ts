@@ -89,9 +89,10 @@ export const getTodayFact = createServerFn({ method: "GET" }).handler(
 export const getArchive = createServerFn({ method: "GET" }).handler(
   async (): Promise<ArchiveEntry[]> => {
     const { supabase } = await import("@/integrations/supabase/client");
+    const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
     const { todayUtc } = await import("./facts.server");
 
-    const { data } = await supabase
+    const { data } = await db
       .from("facts")
       .select("pick_date, slug, title, category, hook")
       .not("pick_date", "is", null)
@@ -123,9 +124,10 @@ export const getFactBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1) }).parse(input))
   .handler(async ({ data }): Promise<{ fact: Fact; pickDate: string | null } | null> => {
     const { supabase } = await import("@/integrations/supabase/client");
+    const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
     const { FACT_COLUMNS, toFact, todayUtc } = await import("./facts.server");
 
-    const { data: row } = await supabase
+    const { data: row } = await db
       .from("facts")
       .select(`${FACT_COLUMNS}, pick_date`)
       .eq("slug", data.slug)
