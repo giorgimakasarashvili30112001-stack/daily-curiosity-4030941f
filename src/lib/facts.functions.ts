@@ -91,7 +91,7 @@ export const getArchive = createServerFn({ method: "GET" }).handler(
     const { supabase } = await import("@/integrations/supabase/client");
     const { todayUtc } = await import("./facts.server");
 
-    const { data } = await supabaseAdmin
+    const { data } = await supabase
       .from("facts")
       .select("pick_date, slug, title, category, hook")
       .not("pick_date", "is", null)
@@ -125,7 +125,7 @@ export const getFactBySlug = createServerFn({ method: "GET" })
     const { supabase } = await import("@/integrations/supabase/client");
     const { FACT_COLUMNS, toFact, todayUtc } = await import("./facts.server");
 
-    const { data: row } = await supabaseAdmin
+    const { data: row } = await supabase
       .from("facts")
       .select(`${FACT_COLUMNS}, pick_date`)
       .eq("slug", data.slug)
