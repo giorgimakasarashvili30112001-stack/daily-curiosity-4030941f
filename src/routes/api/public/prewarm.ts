@@ -17,7 +17,9 @@ async function isAuthorized(provided: string): Promise<boolean> {
   if (secret && provided === secret) return true;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await supabase.rpc("verify_cron_token", {
+    // Loosely typed: `verify_cron_token` is not in the generated types.
+    const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
+    const { data, error } = await db.rpc("verify_cron_token", {
       p_name: "prewarm",
       p_token: provided,
     });
