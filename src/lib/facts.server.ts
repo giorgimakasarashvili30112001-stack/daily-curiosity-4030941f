@@ -6,7 +6,16 @@
  * AI top-up routine that keeps the unused-fact pool stocked. Uses the Supabase
  * admin client, so it must never be imported by client code.
  */
-import { supabase as supabaseAdmin } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Loosely typed view of the shared client. The generated `Database` types are
+ * stale (they predate columns such as `facts.pick_date`), so server-side
+ * queries cast away the strict table types.
+ */
+const supabaseAdmin = supabase as unknown as SupabaseClient;
 
 /** One numbered step of an explainer: a short heading plus its explanation. */
 export type FactStep = { heading: string; body: string };
