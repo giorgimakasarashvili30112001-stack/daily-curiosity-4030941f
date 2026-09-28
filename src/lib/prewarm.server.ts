@@ -1,4 +1,9 @@
-import { supabase as supabaseAdmin } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { supabase } from "@/integrations/supabase/client";
+
+/** Loosely typed client: generated types predate the `facts.pick_date` column. */
+const supabaseAdmin = supabase as unknown as SupabaseClient;
 
 import { ensureDailyPick, todayUtc, topUpFacts, countUnusedFacts } from "./facts.server";
 import { loadQuestion, getQuestionForFact } from "./quiz.server";
