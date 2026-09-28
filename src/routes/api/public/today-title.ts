@@ -15,7 +15,9 @@ async function handle(): Promise<Response> {
     const { supabase } = await import("@/integrations/supabase/client");
     const date = new Date().toISOString().slice(0, 10);
 
-    const { data, error } = await supabase
+    // Loosely typed: generated types predate the `facts.pick_date` column.
+    const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
+    const { data, error } = await db
       .from("facts")
       .select("title, category, slug, pick_date")
       .eq("pick_date", date)
