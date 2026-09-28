@@ -43,6 +43,8 @@ export const Route = createFileRoute("/")({
           "A fresh how-it-works or what-it-means explainer every day. Build general knowledge in two minutes a morning.",
       },
       { property: "og:title", content: "The Daily How — one new explainer every day" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "How things work, what things mean. One short explainer, every single day.",
@@ -67,7 +69,11 @@ function TodayPage() {
 
   const saved = useQuery({
     queryKey: ["fact-saved", data?.fact?.id, user?.id],
-    queryFn: () => savedFn({ data: { factId: data!.fact!.id } }),
+    queryFn: () => {
+      const factId = data?.fact?.id;
+      if (!factId) return Promise.resolve({ saved: false });
+      return savedFn({ data: { factId } });
+    },
     enabled: !!user && !!data?.fact,
   });
 

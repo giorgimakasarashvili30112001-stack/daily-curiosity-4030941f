@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin as serverClient } from "@/integrations/supabase/client.server";
 
-/** Loosely typed client: generated types predate the `facts.pick_date` column. */
-const supabaseAdmin = supabase as unknown as SupabaseClient;
+/** Loosely typed server-only client: generated types predate `facts.pick_date`. */
+const supabaseAdmin = serverClient as unknown as SupabaseClient;
 
 export type QuizQuestionRow = {
   id: string;
