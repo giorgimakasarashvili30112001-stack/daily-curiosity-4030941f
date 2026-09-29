@@ -4,7 +4,8 @@ import WidgetKit
 // Add via Xcode: File > New > Target > Widget Extension ("DailyFactWidget").
 // Replace the generated source with this file.
 
-private let appOrigin = "https://YOUR-DOMAIN"
+// `appOrigin` is defined in AppConfig.swift, generated from APP_URL in .env
+// by `npm run config:sync`. Add both files to the widget target.
 private let endpoint = URL(string: "\(appOrigin)/api/public/today-title")!
 
 struct TodayTitle: Decodable {

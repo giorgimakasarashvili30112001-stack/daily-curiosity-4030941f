@@ -1,3 +1,5 @@
+-- TEMPLATE: do not run directly. Set APP_URL in .env, run `npm run config:sync`,
+-- then run the generated db/generated/daily_scheduler.sql instead.
 -- ============================================================================
 -- The Daily How — daily content scheduler (run ONCE in Supabase SQL Editor)
 -- ============================================================================
@@ -51,7 +53,7 @@ select cron.schedule(
   '5 0 * * *',
   $$
   select net.http_post(
-    url := 'https://YOUR-DOMAIN/api/public/prewarm',
+    url := '{{APP_URL}}/api/public/prewarm',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || (select token from private.cron_tokens where name = 'prewarm')

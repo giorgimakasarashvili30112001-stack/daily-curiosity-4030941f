@@ -17,13 +17,13 @@ import java.net.URL
 
 /**
  * Home-screen widget that shows only today's fact title.
- * Data source: GET {APP_ORIGIN}/api/public/today-title
+ * Data source: GET {AppConfig.APP_ORIGIN}/api/public/today-title
+ * (AppConfig.kt is generated from APP_URL in .env by `npm run config:sync`.)
  */
 class DailyFactWidget : AppWidgetProvider() {
 
     companion object {
-        const val APP_ORIGIN = "https://YOUR-DOMAIN"
-        private const val ENDPOINT = "$APP_ORIGIN/api/public/today-title"
+        private const val ENDPOINT = "${AppConfig.APP_ORIGIN}/api/public/today-title"
     }
 
     override fun onUpdate(
@@ -50,7 +50,7 @@ class DailyFactWidget : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.daily_fact_widget)
         views.setTextViewText(R.id.widget_title, title)
 
-        val openApp = Intent(Intent.ACTION_VIEW, Uri.parse(APP_ORIGIN))
+        val openApp = Intent(Intent.ACTION_VIEW, Uri.parse(AppConfig.APP_ORIGIN))
         val pending = PendingIntent.getActivity(
             context,
             0,

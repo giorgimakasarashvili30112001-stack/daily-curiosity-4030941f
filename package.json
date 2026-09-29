@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "start": "node .output/server/index.mjs"
+    "start": "node --env-file-if-exists=.env .output/server/index.mjs",
+    "config:sync": "node scripts/sync-config.mjs",
+    "cap:sync": "node scripts/sync-config.mjs && cap sync"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
@@ -91,5 +93,8 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=22.9"
   }
 }

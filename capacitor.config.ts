@@ -1,12 +1,21 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+// Configuration comes from `.env` (see .env.example); real env vars win.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // No .env file: rely on the real environment (e.g. CI).
+}
+
 /**
  * Native Android/iOS shell for the server-rendered app.
  * The shell loads the deployed site, so `webDir` only needs to exist.
- * Set APP_URL to your deployed origin (e.g. https://dailyhow.example.com)
- * before running `npx cap sync`.
+ * APP_URL (in `.env`) is your deployed origin, e.g. https://dailyhow.example.com.
  */
-const APP_URL = process.env["APP_URL"] ?? "https://YOUR-DOMAIN";
+const APP_URL = process.env["APP_URL"];
+if (!APP_URL) {
+  throw new Error("APP_URL is not set. Add it to .env (see .env.example) before syncing.");
+}
 
 const config: CapacitorConfig = {
   appId: "com.dailyhow.app",

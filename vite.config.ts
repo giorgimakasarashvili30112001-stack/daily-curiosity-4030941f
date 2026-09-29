@@ -1,26 +1,37 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
+// `.env` is the single source of configuration (see .env.example). Load it into
+// process.env so server code sees it in dev too. Real environment variables
+// (e.g. set on your host) always win over the file.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // No .env file: rely on the real environment.
+}
+
 /**
  * Vite config for The Daily How (TanStack Start + Tailwind v4 + Nitro).
  *
  * Deploy target: the Nitro preset defaults to a plain Node server
- * (`npm run build && npm start`). Override it for other hosts with the
- * NITRO_PRESET env var at build time, e.g. `NITRO_PRESET=vercel npm run build`
- * or `NITRO_PRESET=cloudflare-module`.
+ * (`npm run build && npm start`). Override it with NITRO_PRESET in `.env`,
+ * e.g. `vercel`, `netlify` or `cloudflare-module`.
  */
-export default defineConfig(({ command, mode }) => {
-  // Expose VITE_* variables to server code as well as the client bundle.
-  const viteEnv = loadEnv(mode, process.cwd(), "VITE_");
+export default defineConfig(({ command }) => {
+  // Only these two PUBLIC values reach the browser bundle. Secrets such as
+  // SUPABASE_SERVICE_ROLE_KEY and GEMINI_API_KEY are deliberately not listed.
+  const publicEnv: Record<string, string | undefined> = {
+    VITE_SUPABASE_URL: process.env["SUPABASE_URL"],
+    VITE_SUPABASE_PUBLISHABLE_KEY: process.env["SUPABASE_PUBLISHABLE_KEY"],
+  };
   const define = Object.fromEntries(
-    Object.entries(viteEnv).map(([key, value]) => [
-      `import.meta.env.${key}`,
-      JSON.stringify(value),
-    ]),
+    Object.entries(publicEnv)
+      .filter(([, value]) => !!value)
+      .map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)]),
   );
 
   return {
@@ -39,7 +50,7 @@ export default defineConfig(({ command, mode }) => {
     optimizeDeps: {
       include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
     },
-    server: { host: "::", port: 8080 },
+    server: { port: 8080 },
     plugins: [
       tailwindcss(),
       tsConfigPaths({ projects: ["./tsconfig.json"] }),
