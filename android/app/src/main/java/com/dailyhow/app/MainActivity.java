@@ -1,4 +1,4 @@
-package app.lovable.dailycuriosity;
+package com.dailyhow.app;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,4 +1,4 @@
-package app.lovable.dailycuriosity.widget
+package com.dailyhow.app.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -22,7 +22,7 @@ import java.net.URL
 class DailyFactWidget : AppWidgetProvider() {
 
     companion object {
-        const val APP_ORIGIN = "https://project--4537fc7c-9d89-4404-be9b-4ff997c88324.lovable.app"
+        const val APP_ORIGIN = "https://YOUR-DOMAIN"
         private const val ENDPOINT = "$APP_ORIGIN/api/public/today-title"
     }
 

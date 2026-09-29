@@ -51,7 +51,7 @@ select cron.schedule(
   '5 0 * * *',
   $$
   select net.http_post(
-    url := 'https://id-preview--da48e79e-7637-4feb-aebb-caf91dd115b6.lovable.app/api/public/prewarm',
+    url := 'https://YOUR-DOMAIN/api/public/prewarm',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || (select token from private.cron_tokens where name = 'prewarm')

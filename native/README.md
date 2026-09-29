@@ -1,6 +1,6 @@
 # Native app + home-screen widget
 
-The web app stays in Lovable. The native shell and the widgets are built locally
+The web app is deployed separately (see the main README). The native shell and the widgets are built locally
 with Capacitor + Xcode/Android Studio.
 
 ## 1. Data source
@@ -30,7 +30,7 @@ Copy from `native/android/` into the generated project:
 
 | File | Destination |
 | --- | --- |
-| `DailyFactWidget.kt` | `android/app/src/main/java/app/lovable/dailycuriosity/widget/` |
+| `DailyFactWidget.kt` | `android/app/src/main/java/com/dailyhow/app/widget/` |
 | `daily_fact_widget.xml` | `android/app/src/main/res/layout/` |
 | `daily_fact_widget_info.xml` | `android/app/src/main/res/xml/` |
 | `widget_background.xml` | `android/app/src/main/res/drawable/` |

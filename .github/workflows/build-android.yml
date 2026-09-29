@@ -39,6 +39,9 @@ jobs:
         run: mkdir -p android/app/src/main/assets
 
       - name: Sync Capacitor Android project
+        env:
+          # Repository variable: Settings > Secrets and variables > Actions > Variables
+          APP_URL: ${{ vars.APP_URL }}
         run: npx cap sync android
 
       - name: Make gradlew executable

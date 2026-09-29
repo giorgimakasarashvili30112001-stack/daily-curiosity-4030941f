@@ -1,7 +1,7 @@
 # Building The Daily How for Google Play
 
 The store file has to be built on your own computer (Android Studio needs a
-real Java + Android SDK install, which the Lovable cloud editor does not have).
+real Java + Android SDK install).
 
 ## 1. Get the code
 
@@ -19,7 +19,7 @@ npx cap sync android
 ```
 
 The app loads the hosted site from `capacitor.config.ts`, so no web build is
-needed for the shell to work. Publish the Lovable app first so that URL is live.
+needed for the shell to work. Deploy the web app first and set `APP_URL` to its origin (e.g. `APP_URL=https://your-domain npx cap sync android`).
 
 ## 3. Open it in Android Studio
 
@@ -48,6 +48,6 @@ Want a plain .apk for testing on your own phone instead? Same menu, choose
 ## 5. Before you submit
 
 - Set a unique application id in `android/app/build.gradle` if
-  `app.lovable.dailycuriosity` is not the name you want on the store.
+  `com.dailyhow.app` is not the name you want on the store.
 - Bump `versionCode` / `versionName` for each new upload.
 - Prepare a privacy policy URL, app icon, and screenshots — Play requires them.
