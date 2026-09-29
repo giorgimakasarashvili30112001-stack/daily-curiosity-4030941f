@@ -7,6 +7,7 @@
  * admin client, so it must never be imported by client code.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { generateJson } from "@/lib/ai.server";
 import { supabaseAdmin as serverClient } from "@/integrations/supabase/client.server";
 
 /** Generated types predate `facts.pick_date`; these queries use the server-only client. */
@@ -168,95 +169,47 @@ const CATEGORIES = [
   "General Knowledge",
 ];
 
-/** Generates new explainers with Lovable AI when the unused library runs low. */
+/** Generates new explainers with Gemini when the unused library runs low. */
 export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number> {
   const unused = await countUnusedFacts();
   if (unused >= minUnused) return 0;
 
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
-
   const { data: existing } = await supabaseAdmin.from("facts").select("title").limit(1000);
   const existingTitles = (existing ?? []).map((r) => r.title);
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": apiKey,
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-5.6-sol",
-      reasoning_effort: "none",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You write short, factually accurate general-knowledge explainers for The Daily How app. Voice: sharp, warm, concrete, no fluff, no emoji.",
-        },
-        {
-          role: "user",
-          content: `Write ${batchSize} new explainers. Each title is either "How X works" or "What X means". Categories must come from: ${CATEGORIES.join(", ")}. hook = one punchy sentence under 90 characters. intro = two sentences of plain-language setup. steps = exactly 4 items, heading under 6 words, body 1-2 sentences explaining the real mechanism. surprising_detail = one genuinely surprising true fact. Topics must be concrete everyday curiosities. Do NOT reuse any of these existing titles: ${existingTitles.join(" | ")}`,
-        },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "facts_batch",
-          strict: true,
-          schema: {
+  const content = await generateJson({
+    system:
+      "You write short, factually accurate general-knowledge explainers for The Daily How app. Voice: sharp, warm, concrete, no fluff, no emoji.",
+    user: `Write ${batchSize} new explainers. Each title is either "How X works" or "What X means". Categories must come from: ${CATEGORIES.join(", ")}. hook = one punchy sentence under 90 characters. intro = two sentences of plain-language setup. steps = exactly 4 items, heading under 6 words, body 1-2 sentences explaining the real mechanism. surprising_detail = one genuinely surprising true fact. Topics must be concrete everyday curiosities. Do NOT reuse any of these existing titles: ${existingTitles.join(" | ")}`,
+    schema: {
+      type: "object",
+      properties: {
+        facts: {
+          type: "array",
+          items: {
             type: "object",
-            additionalProperties: false,
             properties: {
-              facts: {
+              title: { type: "string" },
+              category: { type: "string", enum: CATEGORIES },
+              hook: { type: "string" },
+              intro: { type: "string" },
+              steps: {
                 type: "array",
                 items: {
                   type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    title: { type: "string" },
-                    category: { type: "string", enum: CATEGORIES },
-                    hook: { type: "string" },
-                    intro: { type: "string" },
-                    steps: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        additionalProperties: false,
-                        properties: { heading: { type: "string" }, body: { type: "string" } },
-                        required: ["heading", "body"],
-                      },
-                    },
-                    surprising_detail: { type: "string" },
-                  },
-                  required: [
-                    "title",
-                    "category",
-                    "hook",
-                    "intro",
-                    "steps",
-                    "surprising_detail",
-                  ],
+                  properties: { heading: { type: "string" }, body: { type: "string" } },
+                  required: ["heading", "body"],
                 },
               },
+              surprising_detail: { type: "string" },
             },
-            required: ["facts"],
+            required: ["title", "category", "hook", "intro", "steps", "surprising_detail"],
           },
         },
       },
-    }),
+      required: ["facts"],
+    },
   });
-
-  if (response.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
-  if (response.status === 402) throw new Error("AI credits exhausted for this workspace.");
-  if (!response.ok) {
-    throw new Error(`AI request failed (${response.status}): ${await response.text()}`);
-  }
-
-  const payload = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = payload.choices?.[0]?.message?.content;
   if (!content) return 0;
 
   let parsed: { facts?: GeneratedFact[] };

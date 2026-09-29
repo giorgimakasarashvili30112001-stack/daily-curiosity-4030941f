@@ -2,7 +2,7 @@
   Paste inside <application> in android/app/src/main/AndroidManifest.xml
 -->
 <receiver
-    android:name="app.lovable.dailycuriosity.widget.DailyFactWidget"
+    android:name="com.dailyhow.app.widget.DailyFactWidget"
     android:exported="false">
     <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

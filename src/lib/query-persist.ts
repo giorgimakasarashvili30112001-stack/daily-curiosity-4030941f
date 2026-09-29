@@ -94,7 +94,7 @@ export function setupFactCache(queryClient: QueryClient) {
     if (raw) {
       const parsed = JSON.parse(raw) as Stored;
       if (Date.now() - parsed.timestamp < MAX_AGE) {
-        hydrate(queryClient, sanitize(parsed.state));
+        hydrate(queryClient, sanitize(parsed.state) as Parameters<typeof hydrate>[1]);
       } else {
         window.localStorage.removeItem(STORAGE_KEY);
       }

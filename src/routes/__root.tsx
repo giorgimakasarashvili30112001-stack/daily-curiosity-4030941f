@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -42,15 +41,12 @@ function NotFoundComponent() {
 
 /**
  * Root-level error boundary. Rendered when a route's loader/component throws.
- * Reports the error to the Lovable error-tracking pipeline and offers the
+ * Logs the error and offers the
  * user a way to retry (re-run loaders) or bail out to the home page.
  */
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

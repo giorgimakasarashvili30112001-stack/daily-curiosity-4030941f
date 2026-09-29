@@ -6,7 +6,7 @@ home-screen widgets and daily reminders.
 
 - **Stack:** TanStack Start v1 (React 19 SSR) + Vite 7 + Tailwind v4, Supabase
   (Postgres, Auth, RLS), TanStack Query with localStorage persistence.
-- **Content:** explainers generated with Lovable AI, quiz questions with Gemini.
+- **Content:** explainers and quiz questions generated with Google Gemini.
 - **Mobile:** Capacitor shell that loads the hosted site, plus native widgets
   and local notifications.
 

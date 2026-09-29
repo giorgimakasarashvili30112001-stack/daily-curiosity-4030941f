@@ -4,7 +4,7 @@ import WidgetKit
 // Add via Xcode: File > New > Target > Widget Extension ("DailyFactWidget").
 // Replace the generated source with this file.
 
-private let appOrigin = "https://project--4537fc7c-9d89-4404-be9b-4ff997c88324.lovable.app"
+private let appOrigin = "https://YOUR-DOMAIN"
 private let endpoint = URL(string: "\(appOrigin)/api/public/today-title")!
 
 struct TodayTitle: Decodable {
