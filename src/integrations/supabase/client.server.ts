@@ -4,7 +4,7 @@
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import { SUPABASE_URL as DEFAULT_SUPABASE_URL } from './config';
+import { SUPABASE_URL } from './config';
 
 
 /** Detects Supabase's newer opaque `sb_publishable_`/`sb_secret_` key formats. */
@@ -44,15 +44,14 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
  * token refresh are disabled since this client isn't tied to any one user.
  */
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env['SUPABASE_URL'] || process.env['SB_URL'] || DEFAULT_SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SB_SERVICE_ROLE_KEY'];
+  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Set them in your environment (see .env.example).`;
+    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Set them in .env (see .env.example).`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }

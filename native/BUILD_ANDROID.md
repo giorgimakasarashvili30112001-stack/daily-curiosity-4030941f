@@ -15,11 +15,11 @@ npm install
 
 ```bash
 npx cap add android
-npx cap sync android
+npm run cap:sync -- android
 ```
 
 The app loads the hosted site from `capacitor.config.ts`, so no web build is
-needed for the shell to work. Deploy the web app first and set `APP_URL` to its origin (e.g. `APP_URL=https://your-domain npx cap sync android`).
+needed for the shell to work. Deploy the web app first, set `APP_URL` in `.env` to its origin, then run `npm run cap:sync`.
 
 ## 3. Open it in Android Studio
 

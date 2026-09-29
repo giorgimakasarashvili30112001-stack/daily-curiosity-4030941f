@@ -1,10 +1,21 @@
-// Public Supabase project configuration.
-// These values are safe to ship in client code: the publishable (anon) key is
-// protected by row-level security. Environment variables still take precedence.
+// Single place where Supabase settings are resolved for the whole app.
+//
+// Everything comes from the project's `.env` file (see `.env.example`):
+//   - Server: read from process env at runtime (`SUPABASE_URL`, ...).
+//   - Browser: `vite.config.ts` copies ONLY the two public values below into
+//     the bundle as VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY.
+// The service-role key is never exposed to the browser; it is read in
+// `client.server.ts` only.
 
-// Default project id / URL / anon key, used when no environment variables
-// override them (see client.ts / client.server.ts / auth-middleware.ts).
-export const SUPABASE_PROJECT_ID = 'ktnayycclukcwfupsdiz';
-export const SUPABASE_URL = 'https://ktnayycclukcwfupsdiz.supabase.co';
-export const SUPABASE_PUBLISHABLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0bmF5eWNjbHVrY3dmdXBzZGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NzQwMzUsImV4cCI6MjEwMDA1MDAzNX0.cPYAA3l9iOa7zU_NUMji9npCeBS1IuIXlXDV-GOeIL0';
+/** Reads a runtime env var on the server; returns undefined in the browser. */
+function runtimeEnv(key: string): string | undefined {
+  return typeof process !== "undefined" ? process.env?.[key] : undefined;
+}
+
+/** Supabase project URL, e.g. https://xxxx.supabase.co */
+export const SUPABASE_URL: string =
+  runtimeEnv("SUPABASE_URL") || import.meta.env.VITE_SUPABASE_URL || "";
+
+/** Public anon/publishable key (safe for the browser; protected by RLS). */
+export const SUPABASE_PUBLISHABLE_KEY: string =
+  runtimeEnv("SUPABASE_PUBLISHABLE_KEY") || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";

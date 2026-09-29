@@ -3,17 +3,17 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * Scheduled endpoint that prepares tomorrow's explainer + quiz question.
  * Call it once a day (e.g. pg_cron) with:
- *   Authorization: Bearer <SB_SERVICE_ROLE_KEY>
+ *   Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>
  */
 /**
  * Accepts the call when the bearer token matches the env secret
- * (PREWARM_SECRET / SB_SERVICE_ROLE_KEY) or the database-generated token the
+ * (PREWARM_SECRET / SUPABASE_SERVICE_ROLE_KEY) or the database-generated token the
  * daily pg_cron job sends (verified via the service-role-only
- * `verify_cron_token` function — see DAILY_SCHEDULER_SETUP.sql).
+ * `verify_cron_token` function — see db/templates/daily_scheduler.sql.tpl).
  */
 async function isAuthorized(provided: string): Promise<boolean> {
   if (!provided) return false;
-  const secret = process.env["PREWARM_SECRET"] ?? process.env["SB_SERVICE_ROLE_KEY"] ?? "";
+  const secret = process.env["PREWARM_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "";
   if (secret && provided === secret) return true;
   try {
     const { supabase } = await import("@/integrations/supabase/client");
