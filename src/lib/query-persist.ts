@@ -26,12 +26,16 @@ const CACHEABLE_KEYS = new Set(["archive", "fact", "today-fact", "saved-facts"])
 function isCacheable(query: Query): boolean {
   const key = query.queryKey[0];
   if (typeof key !== "string" || !CACHEABLE_KEYS.has(key)) return false;
+  if (key === "today-fact") {
+    const value = query.state.data as { date?: string; fact?: unknown } | undefined;
+    if (!value?.fact || value.date !== new Date().toISOString().slice(0, 10)) return false;
+  }
   // Persisting a pending query would restore an unresolvable promise and the
   // query would hang forever on the next visit.
   return query.state.status === "success" && query.state.data !== undefined;
 }
 
-type DehydratedQuery = { state?: { status?: string; data?: unknown } };
+type DehydratedQuery = { queryKey?: readonly unknown[]; state?: { status?: string; data?: unknown } };
 type Stored = { timestamp: number; state: { queries?: DehydratedQuery[] } };
 
 /**
@@ -46,9 +50,14 @@ type Stored = { timestamp: number; state: { queries?: DehydratedQuery[] } };
 function sanitize(state: Stored["state"]) {
   return {
     ...state,
-    queries: (state.queries ?? []).filter(
-      (q) => q.state?.status === "success" && q.state?.data !== undefined,
-    ),
+    queries: (state.queries ?? []).filter((q) => {
+      if (q.state?.status !== "success" || q.state.data === undefined) return false;
+      if (q.queryKey?.[0] === "today-fact") {
+        const value = q.state.data as { date?: string; fact?: unknown } | null;
+        return !!value?.fact && value.date === new Date().toISOString().slice(0, 10);
+      }
+      return true;
+    }),
   };
 }
 
