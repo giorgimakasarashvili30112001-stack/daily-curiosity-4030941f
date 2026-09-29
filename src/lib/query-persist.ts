@@ -35,7 +35,7 @@ function isCacheable(query: Query): boolean {
   return query.state.status === "success" && query.state.data !== undefined;
 }
 
-type DehydratedQuery = { queryKey?: unknown[]; state?: { status?: string; data?: unknown } };
+type DehydratedQuery = { queryKey?: readonly unknown[]; state?: { status?: string; data?: unknown } };
 type Stored = { timestamp: number; state: { queries?: DehydratedQuery[] } };
 
 /**
