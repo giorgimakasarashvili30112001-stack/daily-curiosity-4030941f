@@ -31,6 +31,13 @@ android {
         release {
             if (file('release.keystore').exists()) {
                 signingConfig signingConfigs.release
+            } else {
+                // No release keystore provided (e.g. CI without KEYSTORE_* secrets):
+                // sign with the debug key so the APK is installable for testing.
+                // An unsigned APK fails to install ("package appears to be invalid").
+                // NOT valid for Play Store upload: add a real keystore for that
+                // (see native/BUILD_ANDROID.md).
+                signingConfig signingConfigs.debug
             }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

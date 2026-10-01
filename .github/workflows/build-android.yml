@@ -94,6 +94,21 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
 
+      # Fails the build if an APK is unsigned (an unsigned APK cannot be installed
+      # and Android reports it as "package appears to be invalid").
+      - name: Verify APK signatures
+        run: |
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          for apk in android/app/build/outputs/apk/debug/*.apk android/app/build/outputs/apk/release/*.apk; do
+            echo "== $apk"
+            "$APKSIGNER" verify --verbose --print-certs "$apk"
+          done
+          if [ -z "${KEYSTORE_FILE}" ]; then
+            echo "::warning title=Release is signed with a DEBUG key::Fine for installing/testing, but the Play Store requires a real keystore. Add KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD secrets."
+          fi
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

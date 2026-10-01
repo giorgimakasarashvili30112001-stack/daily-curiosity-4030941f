@@ -51,3 +51,41 @@ Want a plain .apk for testing on your own phone instead? Same menu, choose
   `com.dailyhow.app` is not the name you want on the store.
 - Bump `versionCode` / `versionName` for each new upload.
 - Prepare a privacy policy URL, app icon, and screenshots — Play requires them.
+
+## GitHub Actions builds: installing the APK
+
+The workflow (`.github/workflows/build-android.yml`) uploads three artifacts:
+`app-debug-apk`, `app-release-apk` and `app-release-aab`.
+
+- GitHub downloads artifacts as a **.zip**. Unzip it first; the `.apk` is
+  inside. Installing the zip itself gives "package appears to be invalid".
+- To install on a phone, enable "Install unknown apps" for your browser/files
+  app, then open the `.apk`.
+- Without signing secrets, the release APK is signed with a throwaway **debug**
+  key so it installs. Each CI run generates a new debug key, so installing a
+  newer build over an older one fails until you uninstall the old app first.
+  The AAB is also debug-signed and **cannot be uploaded to the Play Store**.
+
+### Real signing key (needed for stable updates and the Play Store)
+
+Create a keystore once, on your own machine, and back it up somewhere safe
+(if you lose it you can never update the app under the same listing):
+
+```sh
+keytool -genkeypair -v -keystore release.keystore -alias dailyhow \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 release.keystore > release.keystore.b64   # macOS: base64 -i release.keystore
+```
+
+Then add four **secrets** in GitHub (Settings → Secrets and variables →
+Actions → **Secrets**):
+
+| Secret | Value |
+| --- | --- |
+| `KEYSTORE_FILE` | contents of `release.keystore.b64` |
+| `KEYSTORE_PASSWORD` | the keystore password you chose |
+| `KEY_ALIAS` | `dailyhow` (or the alias you used) |
+| `KEY_PASSWORD` | the key password you chose |
+
+The workflow then signs release builds with it automatically and verifies the
+signature. Never commit the keystore file.
