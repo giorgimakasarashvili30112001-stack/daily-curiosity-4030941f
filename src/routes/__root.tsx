@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
+import { publicConfigScript } from "@/integrations/supabase/config";
 import { Toaster } from "@/components/ui/sonner";
 
 /**
@@ -143,6 +144,8 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
+        {/* Public runtime config for the browser (must run before app scripts). */}
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: publicConfigScript() }} />
         <HeadContent />
       </head>
       <body>

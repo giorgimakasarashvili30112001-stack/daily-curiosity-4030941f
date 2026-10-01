@@ -63,9 +63,22 @@ npm run build
 npm start          # node --env-file-if-exists=.env .output/server/index.mjs
 ```
 
-`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are baked into the browser bundle
-at build time, so rebuild after changing them. Set `NITRO_PRESET` in `.env`
+The server injects `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` into each page
+at request time, so changing them needs only a restart, not a rebuild. Set `NITRO_PRESET` in `.env`
 (e.g. `vercel`, `netlify`, `cloudflare-module`) to target another host.
+
+### Cloudflare (Workers / Pages)
+
+1. Connect the repo; build command `npm run build`. Nitro detects Cloudflare
+   automatically. If your output isn't a Worker, add `NITRO_PRESET=cloudflare-module`
+   (Workers) or `cloudflare-pages` (Pages) as a **build** variable.
+2. In the project's **Settings → Variables and secrets** (the *runtime* ones,
+   not "Build variables"), add:
+   - plain variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
+   - **secrets**: `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `PREWARM_SECRET`
+3. Redeploy. The server hands the two public Supabase values to the browser in
+   the page itself, so no rebuild is needed when they change. Secrets are never
+   sent to the browser.
 
 ## Daily scheduler
 

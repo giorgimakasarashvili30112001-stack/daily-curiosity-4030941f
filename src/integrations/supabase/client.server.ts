@@ -4,7 +4,7 @@
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import { SUPABASE_URL } from './config';
+import { getSupabaseUrl } from './config';
 
 
 /** Detects Supabase's newer opaque `sb_publishable_`/`sb_secret_` key formats. */
@@ -44,6 +44,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
  * token refresh are disabled since this client isn't tied to any one user.
  */
 function createSupabaseAdminClient() {
+  const SUPABASE_URL = getSupabaseUrl();
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

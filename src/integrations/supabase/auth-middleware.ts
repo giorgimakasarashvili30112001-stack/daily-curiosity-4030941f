@@ -3,7 +3,7 @@ import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './config'
+import { getSupabaseUrl, getSupabasePublishableKey } from './config'
 
 
 
@@ -47,7 +47,8 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
  */
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    
+    const SUPABASE_URL = getSupabaseUrl();
+    const SUPABASE_PUBLISHABLE_KEY = getSupabasePublishableKey();
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
         ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),

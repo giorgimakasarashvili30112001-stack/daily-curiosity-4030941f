@@ -17,9 +17,9 @@ try {
 /**
  * Vite config for The Daily How (TanStack Start + Tailwind v4 + Nitro).
  *
- * Deploy target: the Nitro preset defaults to a plain Node server
- * (`npm run build && npm start`). Override it with NITRO_PRESET in `.env`,
- * e.g. `vercel`, `netlify` or `cloudflare-module`.
+ * Deploy target: Nitro auto-detects Cloudflare, Vercel and Netlify builds and
+ * otherwise builds a plain Node server (`npm run build && npm start`).
+ * Force a target with NITRO_PRESET, e.g. `cloudflare-module`.
  */
 export default defineConfig(({ command }) => {
   // Only these two PUBLIC values reach the browser bundle. Secrets such as
@@ -62,7 +62,7 @@ export default defineConfig(({ command }) => {
         // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
         server: { entry: "server" },
       }),
-      ...(command === "build" ? [nitro({ preset: process.env["NITRO_PRESET"] ?? "node-server" })] : []),
+      ...(command === "build" ? [nitro(process.env["NITRO_PRESET"] ? { preset: process.env["NITRO_PRESET"] } : {})] : []),
       viteReact(),
     ],
   };
