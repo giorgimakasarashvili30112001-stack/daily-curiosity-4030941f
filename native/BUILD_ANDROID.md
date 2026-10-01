@@ -89,3 +89,22 @@ Actions → **Secrets**):
 
 The workflow then signs release builds with it automatically and verifies the
 signature. Never commit the keystore file.
+
+### Troubleshooting: "keystore password was incorrect"
+
+The workflow step **Prepare signing keystore** checks the four secrets and
+reports which one is wrong. Common causes:
+
+- **Invisible space/newline in the secret.** Handled automatically now.
+- **Key password vs keystore password.** Modern keystores are PKCS12, which
+  ignores a separate "key password": if `keytool` asked for one and you typed
+  something different, use the *keystore* password for both `KEYSTORE_PASSWORD`
+  and `KEY_PASSWORD`.
+- **Damaged `KEYSTORE_FILE`.** The base64 text must be pasted completely; re-create
+  it with the command above if the message says the file is damaged.
+- **Wrong alias.** `KEY_ALIAS` must be one of the aliases shown in the error
+  (check with `keytool -list -keystore release.keystore`).
+- **Secret under the wrong tab or misspelled.** They must be *Repository secrets*
+  named exactly `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+
+To test the password locally: `keytool -list -keystore release.keystore`.

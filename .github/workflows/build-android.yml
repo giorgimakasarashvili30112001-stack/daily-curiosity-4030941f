@@ -72,15 +72,16 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Decode signing keystore (optional)
+      # Decodes and VERIFIES the keystore secrets (optional; skipped when none are
+      # set) and fails with a precise message if something is wrong, e.g. wrong
+      # password, damaged base64, wrong alias. Cleaned values go to later steps.
+      - name: Prepare signing keystore (optional)
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
-        run: |
-          if [ -n "$KEYSTORE_FILE" ]; then
-            echo "$KEYSTORE_FILE" | base64 -d > android/app/release.keystore
-          else
-            echo "No keystore secret set - release build will be unsigned."
-          fi
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: bash scripts/prepare-signing.sh android/app/release.keystore
 
       - name: Build debug APK
         working-directory: ./android
@@ -88,10 +89,8 @@ jobs:
 
       - name: Build release APK and AAB
         working-directory: ./android
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        # KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD come from the previous
+        # step (cleaned and verified), not directly from secrets.
         run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
 
       # Fails the build if an APK is unsigned (an unsigned APK cannot be installed
