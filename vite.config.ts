@@ -62,7 +62,18 @@ export default defineConfig(({ command }) => {
         // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
         server: { entry: "server" },
       }),
-      ...(command === "build" ? [nitro(process.env["NITRO_PRESET"] ? { preset: process.env["NITRO_PRESET"] } : {})] : []),
+      ...(command === "build"
+        ? [
+            nitro({
+              ...(process.env["NITRO_PRESET"] ? { preset: process.env["NITRO_PRESET"] } : {}),
+              // Cloudflare Workers: `wrangler deploy` (run on every git push) replaces the
+              // Worker's plain-text dashboard variables with whatever the generated config
+              // declares, i.e. nothing, which deletes them. keep_vars preserves them.
+              // Ignored by non-Cloudflare presets.
+              cloudflare: { wrangler: { keep_vars: true } },
+            }),
+          ]
+        : []),
       viteReact(),
     ],
   };

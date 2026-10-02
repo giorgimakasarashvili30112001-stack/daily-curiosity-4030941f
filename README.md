@@ -76,6 +76,11 @@ at request time, so changing them needs only a restart, not a rebuild. Set `NITR
    not "Build variables"), add:
    - plain variables: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
    - **secrets**: `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `PREWARM_SECRET`
+   The build sets `keep_vars: true` in the generated Worker config, so plain
+   variables added in the dashboard are **kept** on every deploy. (Without it,
+   each `wrangler deploy` from a git push wipes dashboard variables; secrets were
+   never affected.) Keep the Worker's name unchanged: variables belong to the
+   Worker, so a renamed Worker starts with none.
 3. Redeploy. The server hands the two public Supabase values to the browser in
    the page itself, so no rebuild is needed when they change. Secrets are never
    sent to the browser.
