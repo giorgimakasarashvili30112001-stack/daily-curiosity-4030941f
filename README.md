@@ -1,4 +1,4 @@
-# The Daily How
+# Daily How
 
 One new explainer every day, plus a one-question quiz on yesterday's explainer,
 a coin/streak system, saved explainers, and an optional native Android/iOS shell

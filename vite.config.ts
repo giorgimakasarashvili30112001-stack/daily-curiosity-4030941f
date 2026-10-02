@@ -15,7 +15,7 @@ try {
 }
 
 /**
- * Vite config for The Daily How (TanStack Start + Tailwind v4 + Nitro).
+ * Vite config for Daily How (TanStack Start + Tailwind v4 + Nitro).
  *
  * Deploy target: Nitro auto-detects Cloudflare, Vercel and Netlify builds and
  * otherwise builds a plain Node server (`npm run build && npm start`).

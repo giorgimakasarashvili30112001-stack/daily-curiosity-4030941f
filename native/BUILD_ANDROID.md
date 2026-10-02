@@ -1,4 +1,4 @@
-# Building The Daily How for Google Play
+# Building Daily How for Google Play
 
 The store file has to be built on your own computer (Android Studio needs a
 real Java + Android SDK install).

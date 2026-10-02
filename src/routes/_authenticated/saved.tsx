@@ -19,9 +19,9 @@ import { FACT_GC_TIME } from "@/lib/cache-time";
 export const Route = createFileRoute("/_authenticated/saved")({
   head: () => ({
     meta: [
-      { title: "Saved explainers — The Daily How" },
+      { title: "Saved explainers — Daily How" },
       { name: "description", content: "Every explainer you bookmarked, in one place." },
-      { property: "og:title", content: "Saved explainers — The Daily How" },
+      { property: "og:title", content: "Saved explainers — Daily How" },
       { property: "og:description", content: "Your personal library of saved explainers." },
     ],
   }),

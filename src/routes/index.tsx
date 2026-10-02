@@ -36,13 +36,13 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(todayQuery),
   head: () => ({
     meta: [
-      { title: "The Daily How — one new explainer every day" },
+      { title: "Daily How — one new explainer every day" },
       {
         name: "description",
         content:
           "A fresh how-it-works or what-it-means explainer every day. Build general knowledge in two minutes a morning.",
       },
-      { property: "og:title", content: "The Daily How — one new explainer every day" },
+      { property: "og:title", content: "Daily How — one new explainer every day" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       {

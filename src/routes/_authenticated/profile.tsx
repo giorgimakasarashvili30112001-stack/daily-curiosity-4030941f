@@ -27,9 +27,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Your profile — The Daily How" },
+      { title: "Your profile — Daily How" },
       { name: "description", content: "Track your reading streak and manage your account." },
-      { property: "og:title", content: "Your profile — The Daily How" },
+      { property: "og:title", content: "Your profile — Daily How" },
       { property: "og:description", content: "Your streak, your name, your account." },
     ],
   }),
@@ -94,7 +94,7 @@ function ProfilePage() {
         <div className="mt-4 flex justify-center">
           <ShareSheet
             title="Share my streak"
-            text={`I'm on a ${data?.streak ?? 0}-day streak on The Daily How — one new explainer every day.`}
+            text={`I'm on a ${data?.streak ?? 0}-day streak on Daily How — one new explainer every day.`}
             url={typeof window !== "undefined" ? window.location.origin : "https://thedailyhow.app"}
           />
         </div>
@@ -212,7 +212,7 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
       )}
       {status === "denied" && (
         <p className="mt-3 text-xs text-destructive">
-          Notifications are blocked — enable them for The Daily How in your system settings.
+          Notifications are blocked — enable them for Daily How in your system settings.
         </p>
       )}
     </div>

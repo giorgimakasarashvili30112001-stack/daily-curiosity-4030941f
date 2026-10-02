@@ -1,7 +1,7 @@
 -- TEMPLATE: do not run directly. Set APP_URL in .env, run `npm run config:sync`,
 -- then run the generated db/generated/daily_scheduler.sql instead.
 -- ============================================================================
--- The Daily How — daily content scheduler (run ONCE in Supabase SQL Editor)
+-- Daily How — daily content scheduler (run ONCE in Supabase SQL Editor)
 -- ============================================================================
 -- What this does:
 --   Every day at 00:05 UTC your database calls the app's /api/public/prewarm

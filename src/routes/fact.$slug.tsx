@@ -41,15 +41,15 @@ export const Route = createFileRoute("/fact/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Explainer not found — The Daily How" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Explainer not found — Daily How" }, { name: "robots", content: "noindex" }],
       };
     }
     const { fact } = loaderData;
     return {
       meta: [
-        { title: `${fact.title} — The Daily How` },
+        { title: `${fact.title} — Daily How` },
         { name: "description", content: fact.hook },
-        { property: "og:title", content: `${fact.title} — The Daily How` },
+        { property: "og:title", content: `${fact.title} — Daily How` },
         { property: "og:description", content: fact.hook },
       ],
     };

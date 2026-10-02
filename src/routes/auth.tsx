@@ -16,12 +16,12 @@ import { AppHeader } from "@/components/AppHeader";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — The Daily How" },
+      { title: "Sign in — Daily How" },
       {
         name: "description",
         content: "Sign in to keep your streak, save explainers, and sync across devices.",
       },
-      { property: "og:title", content: "Sign in — The Daily How" },
+      { property: "og:title", content: "Sign in — Daily How" },
       {
         property: "og:description",
         content: "Keep your daily streak and saved explainers in sync.",

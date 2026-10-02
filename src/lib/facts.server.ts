@@ -179,7 +179,7 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
 
   const content = await generateJson({
     system:
-      "You write short, factually accurate general-knowledge explainers for The Daily How app. Voice: sharp, warm, concrete, no fluff, no emoji.",
+      "You write short, factually accurate general-knowledge explainers for the Daily How app. Voice: sharp, warm, concrete, no fluff, no emoji.",
     user: `Write ${batchSize} new explainers. Each title is either "How X works" or "What X means". Categories must come from: ${CATEGORIES.join(", ")}. hook = one punchy sentence under 90 characters. intro = two sentences of plain-language setup. steps = exactly 4 items, heading under 6 words, body 1-2 sentences explaining the real mechanism. surprising_detail = one genuinely surprising true fact. Topics must be concrete everyday curiosities. Do NOT reuse any of these existing titles: ${existingTitles.join(" | ")}`,
     schema: {
       type: "object",

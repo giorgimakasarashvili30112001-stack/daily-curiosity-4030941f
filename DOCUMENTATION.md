@@ -1,4 +1,4 @@
-# The Daily How — Documentation
+# Daily How — Documentation
 
 One new explainer every day, plus a one-question quiz on yesterday's explainer,
 a coin/streak economy, saved explainers, and a native mobile shell with

@@ -19,7 +19,7 @@ if (!APP_URL) {
 
 const config: CapacitorConfig = {
   appId: "com.dailyhow.app",
-  appName: "The Daily How",
+  appName: "Daily How",
 
   // Not used for content (server.url wins), but Capacitor requires it to exist.
   webDir: "public",
