@@ -100,6 +100,10 @@ reports which one is wrong. Common causes:
   ignores a separate "key password": if `keytool` asked for one and you typed
   something different, use the *keystore* password for both `KEYSTORE_PASSWORD`
   and `KEY_PASSWORD`.
+- **Different keystore file / unusual characters.** If you created several
+  keystores, you may have encoded an older one. Use a letters-and-digits-only
+  password (symbols and non-English characters get mangled on Windows). The
+  quickest fix is to create a new keystore and replace all four secrets.
 - **Damaged `KEYSTORE_FILE`.** The base64 text must be pasted completely; re-create
   it with the command above if the message says the file is damaged.
 - **Wrong alias.** `KEY_ALIAS` must be one of the aliases shown in the error

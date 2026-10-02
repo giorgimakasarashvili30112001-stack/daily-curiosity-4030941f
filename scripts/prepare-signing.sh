@@ -48,7 +48,7 @@ echo "Decoded keystore: $(wc -c < "$OUT") bytes."
 LOG="$(mktemp)"
 if ! keytool -list -keystore "$OUT" -storepass "$SP" > "$LOG" 2>&1; then
   if grep -qi "password was incorrect" "$LOG"; then
-    fail "keystore password rejected" "The file is a valid keystore but KEYSTORE_PASSWORD does not open it (leading/trailing spaces were already ignored). Check: (1) it is the KEYSTORE password; with PKCS12 keystores (default) the 'key password' you may have typed at the keytool prompt was ignored, so the keystore password is the one to use for BOTH KEYSTORE_PASSWORD and KEY_PASSWORD; (2) the secret has no typos; (3) the keystore you encoded is the same one you created with that password."
+    fail "keystore password rejected" "The file is a valid keystore but KEYSTORE_PASSWORD does not open it (leading/trailing spaces were already ignored). Check: (1) it is the KEYSTORE password; with PKCS12 keystores (default) the 'key password' you may have typed at the keytool prompt was ignored, so the keystore password is the one to use for BOTH KEYSTORE_PASSWORD and KEY_PASSWORD; (2) the secret has no typos; (3) the keystore you encoded is the same one you created with that password; (4) use a plain letters-and-digits password: symbols and non-English characters are often mangled on Windows. Simplest fix: create a NEW keystore with a simple password and update all four secrets."
   elif grep -qiE "integrity|EOFException|empty|invalid keystore|format|corrupt" "$LOG"; then
     fail "KEYSTORE_FILE is damaged or incomplete" "The decoded bytes are not a complete keystore (paste cut off, extra characters, or wrong file). Re-create the base64 text and paste the WHOLE value. keytool said: $(head -n1 "$LOG")"
   else
