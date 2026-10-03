@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { FactCard } from "@/components/FactCard";
 import { DailyQuizCard } from "@/components/DailyQuizCard";
+import { TodayLoading } from "@/components/TodayLoading";
+import { getTodayView } from "@/lib/today-view";
 import { getTodayFact } from "@/lib/facts.functions";
 import { getProfile, isFactSaved } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
@@ -26,14 +28,17 @@ const todayQuery = queryOptions({
 /**
  * Route: `/` — the app's home page / "Today" screen.
  * Shows today's explainer (fact) plus the daily quiz card.
- * Data: loads `todayQuery` (today's fact) via the loader so it's ready
- * before render; additionally fetches the signed-in user's profile (for
- * streak) and whether the fact is already saved, both only when a user is
- * logged in. Public route — viewable signed out, but streak/save state and
- * the "keep your streak" CTA only show for authenticated users.
+ * Data: today's fact is fetched by the component (`useQuery(todayQuery)`),
+ * NOT by a blocking route loader: a loader makes the server wait for the
+ * database before sending any HTML, which leaves the phone on a blank screen.
+ * Instead the page shell and a loading screen render immediately, and the fact
+ * fills in as soon as it is available (instantly when cached for today).
+ * Also fetches the signed-in user's profile (for streak) and whether the fact
+ * is already saved, both only when a user is logged in. Public route — viewable
+ * signed out, but streak/save state and the "keep your streak" CTA only show
+ * for authenticated users.
  */
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(todayQuery),
   head: () => ({
     meta: [
       { title: "Daily How — one new explainer every day" },
@@ -56,7 +61,24 @@ export const Route = createFileRoute("/")({
 
 /** Home page component: renders today's fact, quiz, sign-in CTA, and archive link. */
 function TodayPage() {
-  const { data } = useQuery(todayQuery);
+  const { data, isError, isFetching, fetchStatus, refetch } = useQuery(todayQuery);
+
+  // The server HTML always contains the loading screen (it has no data), so the
+  // first client render must too, otherwise React reports a hydration mismatch
+  // when a cached fact is available. Flip right after mount: cached data then
+  // appears on the next frame, with no network wait.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const view = getTodayView({
+    mounted,
+    data,
+    isError,
+    isFetching,
+    fetchStatus,
+    todayUtc: new Date().toISOString().slice(0, 10),
+  });
+
   const { user, loading: sessionLoading } = useSession();
   const profileFn = useServerFn(getProfile);
   const savedFn = useServerFn(isFactSaved);
@@ -95,7 +117,23 @@ function TodayPage() {
     <AppShell>
       <AppHeader eyebrow="Today's explainer" streak={streak.data?.streak ?? null} />
 
-      {data?.fact ? (
+      {view === "error" ? (
+        <div className="rounded-3xl border border-border bg-card p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Couldn&apos;t load today&apos;s explainer. Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+            className="mt-4 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {isFetching ? "Trying…" : "Try again"}
+          </button>
+        </div>
+      ) : view === "loading" ? (
+        <TodayLoading />
+      ) : view === "fact" && data?.fact ? (
         <FactCard
           key={data.fact.id}
           fact={data.fact}
@@ -105,7 +143,7 @@ function TodayPage() {
         />
       ) : (
         <p className="rounded-3xl border border-border bg-card p-6 text-sm text-muted-foreground">
-          Today's explainer is still being prepared. Check back in a moment.
+          Today&apos;s explainer is still being prepared. Check back in a moment.
         </p>
       )}
 
