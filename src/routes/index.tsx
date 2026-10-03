@@ -57,7 +57,7 @@ export const Route = createFileRoute("/")({
 /** Home page component: renders today's fact, quiz, sign-in CTA, and archive link. */
 function TodayPage() {
   const { data } = useQuery(todayQuery);
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
   const profileFn = useServerFn(getProfile);
   const savedFn = useServerFn(isFactSaved);
 
@@ -109,7 +109,8 @@ function TodayPage() {
         </p>
       )}
 
-      <DailyQuizCard isSignedIn={!!user} />
+      {/* Wait for the session check so signed-in users never see the sign-in prompt flash. */}
+      {sessionLoading ? null : <DailyQuizCard isSignedIn={!!user} />}
 
       {!user ? (
         <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-center">

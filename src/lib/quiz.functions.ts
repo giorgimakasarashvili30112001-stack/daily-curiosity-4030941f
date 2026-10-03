@@ -59,8 +59,8 @@ const answerInput = (input: unknown) =>
     .parse(input);
 
 /**
- * Yesterday's explainer turned into one multiple-choice question. Public
- * (no auth required).
+ * Yesterday's explainer turned into one multiple-choice question.
+ * Requires sign-in: the quiz is only offered to signed-in users.
  *
  * How it works: resolves the "fact date" the quiz is based on
  * (`quizFactDate`) from today's UTC date, then loads (or generates)
@@ -69,8 +69,9 @@ const answerInput = (input: unknown) =>
  * Returns: `DailyQuiz` or `null` if no fact/question is available yet.
  * Side effects: may write a new question row via `getQuestionForDate`.
  */
-export const getDailyQuiz = createServerFn({ method: "GET" }).handler(
-  async (): Promise<DailyQuiz | null> => {
+export const getDailyQuiz = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<DailyQuiz | null> => {
     const { todayUtc } = await import("./facts.server");
     const { quizFactDate, getQuestionForDate } = await import("./quiz.server");
 
@@ -89,11 +90,10 @@ export const getDailyQuiz = createServerFn({ method: "GET" }).handler(
       prompt: result.question.prompt,
       options: result.question.options,
     };
-  },
-);
+  });
 
 /**
- * A follow-up question for the same explainer. Shared by everyone: the first
+ * A follow-up question for the same explainer (requires sign-in). Shared by everyone: the first
  * request generates and stores it, parallel requests converge on the same row.
  *
  * Params: `{ factId, questionIndex }` (questionIndex bounded by
@@ -102,6 +102,7 @@ export const getDailyQuiz = createServerFn({ method: "GET" }).handler(
  * Side effects: may insert a new question row via `getQuestionForFact`.
  */
 export const getQuizQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -119,30 +120,6 @@ export const getQuizQuestion = createServerFn({ method: "POST" })
       questionIndex: question.question_index,
       prompt: question.prompt,
       options: question.options,
-    };
-  });
-
-/**
- * Grades an answer without persisting it — used for signed-out play so
- * guests can still see whether they were right.
- *
- * Params: `{ factId, selectedIndex, questionIndex }`.
- * Returns: `QuizResult` (without streak/coins fields) or `null` if the
- * question can't be loaded.
- * Side effects: none (no DB writes).
- */
-export const gradeQuizAnswer = createServerFn({ method: "POST" })
-  .inputValidator(answerInput)
-  .handler(async ({ data }): Promise<QuizResult | null> => {
-    const { loadQuestion } = await import("./quiz.server");
-    const question = await loadQuestion(data.factId, data.questionIndex);
-    if (!question) return null;
-    return {
-      questionIndex: data.questionIndex,
-      selectedIndex: data.selectedIndex,
-      correctIndex: question.correct_index,
-      isCorrect: data.selectedIndex === question.correct_index,
-      explanation: question.explanation,
     };
   });
 

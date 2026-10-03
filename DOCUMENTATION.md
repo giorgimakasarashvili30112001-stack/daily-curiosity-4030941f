@@ -23,7 +23,7 @@ home-screen widgets and daily reminders.
 | Streak | +1 per day with a correct answer. Longest streak is tracked. A missed day is bought back with coins; if coins run out, the streak resets to 0. |
 | Saved explainers | Bookmark any explainer; the list is user-scoped and kept in the local cache. |
 | Archive | Up to 120 past explainers with category filters and a countdown to the next day's release. |
-| Accounts | Email + password or Google sign-in. Signed-out visitors can read and take the quiz, but nothing is saved. |
+| Accounts | Email + password or Google sign-in. Signed-out visitors can read explainers, but the quiz is for signed-in users only: guests see a prompt to sign in to take it. |
 | Reminders | Local notifications at 11:00 and 19:00 device time, skipped once the day's question is answered correctly. Native app only. |
 | Widget | Home-screen widget showing today's explainer title. |
 
@@ -35,7 +35,7 @@ mobile-width column, a header with the wordmark, and a fixed bottom tab bar
 
 - **Today (`/`)** — date label, category chip, title, hook, intro, four
   numbered steps, a "Wait, really?" highlight box, Save and Share buttons, the
-  quiz card, a sign-in prompt for guests, and a link to the archive.
+  quiz card (or, for guests, a prompt to sign in to take the quiz), and a link to the archive.
 - **Archive (`/archive`)** — live countdown to the next explainer, scrollable
   category filter pills, and a list of past explainers (title, category, hook).
 - **Explainer permalink (`/fact/:slug`)** — the same card as Today, shareable;
@@ -93,8 +93,7 @@ db/                  incremental SQL applied on top of the migrations
 - `updateDisplayName({ displayName })`, `getSavedFacts()`, `isFactSaved({ factId })`, `toggleFavorite({ factId })`.
 
 `quiz.functions.ts`
-- `getDailyQuiz()` / `getQuizQuestion({ factId, questionIndex })` — public reads.
-- `gradeQuizAnswer(...)` — grades without saving (guests).
+- `getDailyQuiz()` / `getQuizQuestion({ factId, questionIndex })` — authenticated (the quiz is for signed-in users only).
 - `submitQuizAnswer(...)` — authenticated: records the attempt, awards coin and streak once per day.
 - `getQuizAttempt({ factId })`, `getStreakCalendar({ month })`, `getQuizStats()`.
 
