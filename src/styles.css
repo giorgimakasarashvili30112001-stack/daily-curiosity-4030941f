@@ -2,6 +2,11 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Self-hosted fonts (no third-party request before first paint). Variable fonts:
+   Fraunces covers weight 100-900 + optical size 9-144; Manrope covers weight 200-800. */
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/manrope/wght.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -51,8 +56,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -141,13 +146,15 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 600;
+    /* 700, not 600: the old Google Fonts request only loaded Fraunces 500 and 700, so
+       600 always rendered as 700. Pinned so the self-hosted variable font looks identical. */
+    font-weight: 700;
   }
 }
 
 @utility text-display {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700; /* see note on h1-h3: matches the weight that was actually rendered before */
   letter-spacing: -0.02em;
 }
 

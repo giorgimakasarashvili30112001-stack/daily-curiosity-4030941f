@@ -50,6 +50,11 @@ export default defineConfig(({ command }) => {
     optimizeDeps: {
       include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
     },
+    build: {
+      // Never inline fonts as base64 into the render-blocking stylesheet; keep them as
+      // separate cacheable files. (undefined = Vite's default behaviour for other assets.)
+      assetsInlineLimit: (filePath: string) => (filePath.endsWith(".woff2") ? false : undefined),
+    },
     server: { port: 8080 },
     plugins: [
       tailwindcss(),

@@ -41,9 +41,10 @@ const config: CapacitorConfig = {
       backgroundColor: "#090D15",
       androidScaleType: "CENTER_INSIDE",
     },
-    CapacitorHttp: {
-      enabled: true,
-    },
+    // CapacitorHttp is intentionally OFF. When enabled it replaces fetch() so every
+    // cross-origin request (all Supabase auth traffic) is routed through the native
+    // Java layer instead of the WebView's faster network stack, slowing app start.
+    // Not needed: the app loads from its own origin and Supabase allows CORS.
   },
 };
 

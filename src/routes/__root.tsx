@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 import { hideNativeSplash } from "@/lib/native-splash";
 
 import appCss from "../styles.css?url";
+// Hashed URLs of the latin font files, preloaded so they download in parallel with the CSS.
+import frauncesLatinUrl from "@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2?url";
+import manropeLatinUrl from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
 import { supabase } from "@/integrations/supabase/client";
 import { publicConfigScript } from "@/integrations/supabase/config";
 import { Toaster } from "@/components/ui/sonner";
@@ -117,12 +120,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
-      },
+      // Fonts are self-hosted (see styles.css). Fonts must be fetched with CORS
+      // (crossOrigin) even same-origin, or the preload is not reused.
+      { rel: "preload", as: "font", type: "font/woff2", href: frauncesLatinUrl, crossOrigin: "anonymous" },
+      { rel: "preload", as: "font", type: "font/woff2", href: manropeLatinUrl, crossOrigin: "anonymous" },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/manifest.webmanifest" },
