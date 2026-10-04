@@ -31,10 +31,15 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
+    // Launch splash: shown until the web app calls SplashScreen.hide()
+    // (src/lib/native-splash.ts). launchShowDuration is only a safety cap so the
+    // splash can never get stuck if the site is unreachable (e.g. offline).
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 2000,
-      backgroundColor: "#1a1a1a",
+      launchShowDuration: 10000,
+      launchFadeOutDuration: 250,
+      backgroundColor: "#090D15",
+      androidScaleType: "CENTER_INSIDE",
     },
     CapacitorHttp: {
       enabled: true,
