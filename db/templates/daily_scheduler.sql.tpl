@@ -5,8 +5,10 @@
 -- ============================================================================
 -- What this does:
 --   Every day at 00:05 UTC your database calls the app's /api/public/prewarm
---   endpoint, which reserves that day's explainer and generates its quiz
---   question — even if nobody opens the app.
+--   endpoint, which tops up the library with AI-written explainers and
+--   generates quiz questions — even if nobody opens the app.
+--   NOTE: the daily pick itself is guaranteed by db/daily_picks.sql (run that
+--   too); this job is no longer what chooses the day's explainer.
 --
 -- How to apply:
 --   Supabase Dashboard → SQL Editor → paste this whole file → Run.

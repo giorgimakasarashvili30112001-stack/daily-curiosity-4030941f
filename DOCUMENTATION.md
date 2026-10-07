@@ -99,10 +99,10 @@ db/                  incremental SQL applied on top of the migrations
 
 ### Server-only helpers
 
-- `facts.server.ts` — fact shape and row mapper, `ensureDailyPick(date)` (idempotent daily claim), `topUpFacts()` (AI batch generation with de-duplication), `countUnusedFacts()`, `todayUtc()`.
+- `facts.server.ts` — fact shape and row mapper, `ensureDailyPick(date)` (idempotent daily claim; calls the database function `ensure_daily_pick` from `db/daily_picks.sql`, with the old client-side logic as a fallback if it is not installed), `topUpFacts()` (AI batch generation with de-duplication), `countUnusedFacts()`, `todayUtc()`.
 - `quiz.server.ts` — `quizFactDate()` (yesterday), question load/generate with duplicate-safe upserts so concurrent requests converge.
 - `streak.server.ts` — `settleStreak()`: the streak rules, missed-day buy-back at 30 coins, reset when coins run out; tolerant profile read/write for older schemas.
-- `prewarm.server.ts` — idempotent pre-generation of today's and tomorrow's fact and first question.
+- `prewarm.server.ts` — idempotent: backfills missed days and picks today first (no AI needed), then tops up the library, reserves tomorrow's pick, and pre-generates the first questions.
 - `db.server.ts` — service-role Supabase client used by server helpers only.
 
 ## 4. Data model (Supabase)
@@ -155,8 +155,10 @@ updates ship without a store release (an internet connection is required).
 - Server entry (`src/server.ts`) renders a styled error page for unhandled
   failures and applies security headers (CSP, HSTS, frame and MIME protection)
   to every HTML response.
+- Daily pick: `db/daily_picks.sql` installs `ensure_daily_pick` / `backfill_daily_picks` and an
+  hourly pg_cron job so every day has an explainer even with no visitors.
 - Content pre-generation: call `/api/public/prewarm` on a schedule with the
-  bearer secret.
+  bearer secret (`db/generated/daily_scheduler.sql` does this nightly).
 - Android: `.github/workflows/build-android.yml` builds debug/release APK and a
   Play Store AAB; `native/BUILD_ANDROID.md` and `BUILD_NATIVE.txt` cover the
   local flow (`npm run build` → `npx cap sync android` → Android Studio).

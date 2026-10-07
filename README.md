@@ -87,10 +87,26 @@ at request time, so changing them needs only a restart, not a rebuild. Set `NITR
 
 ## Daily scheduler
 
-`npm run config:sync` writes `db/generated/daily_scheduler.sql` using your
-`APP_URL`. Run that file once in the Supabase SQL editor: it creates a pg_cron
-job (00:05 UTC) that calls `/api/public/prewarm` so each day's explainer and
-quiz exist even if nobody visits. (Don't run the `.tpl` template directly.)
+A new explainer is chosen **every day, whether or not anyone opens the app.** This is
+done by two separate pieces; run both once in the Supabase SQL editor:
+
+1. **`db/daily_picks.sql` (required, no setup needed).** Creates database functions
+   and an hourly pg_cron job (`daily-pick`) that picks each day's explainer inside
+   the database, so it never depends on the website, Cloudflare or the AI. It also
+   **fills any missed days** (and does so immediately when you run it), and retries
+   within the hour if anything fails. If the library of unused explainers ever runs
+   out, the least recently featured one is re-featured as a copy rather than leaving
+   the day blank.
+2. **`db/generated/daily_scheduler.sql`.** Run `npm run config:sync` first (it uses your
+   `APP_URL`). It creates a pg_cron job (00:05 UTC) that calls `/api/public/prewarm`
+   to top up the library with AI-written explainers and pre-generate quizzes.
+   (Don't run the `.tpl` template directly.)
+
+Check it is working: `select pick_date, title from facts where pick_date is not null
+order by pick_date desc limit 10;` (no gaps), `select * from cron.job_run_details
+order by start_time desc limit 10;`, and `select count(*) from facts where pick_date
+is null;` (unused explainers left; if this nears 0, check the prewarm job and
+`GEMINI_API_KEY`).
 
 ## Native app
 

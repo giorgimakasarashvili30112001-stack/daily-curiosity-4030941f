@@ -5,7 +5,13 @@ import { supabaseAdmin as serverClient } from "@/integrations/supabase/client.se
 /** Loosely typed server-only client: generated types predate `facts.pick_date`. */
 const supabaseAdmin = serverClient as unknown as SupabaseClient;
 
-import { ensureDailyPick, todayUtc, topUpFacts, countUnusedFacts } from "./facts.server";
+import {
+  ensureDailyPick,
+  isMissingFunctionError,
+  todayUtc,
+  topUpFacts,
+  countUnusedFacts,
+} from "./facts.server";
 import { loadQuestion, getQuestionForFact } from "./quiz.server";
 
 export type PrewarmResult = {
@@ -49,7 +55,20 @@ export async function prewarmTomorrow(): Promise<PrewarmResult> {
     errors: [],
   };
 
-  // 1. Keep the unused library stocked so a pick is always available.
+  // 1. Make sure today (and any days missed while nothing ran) HAS a fact. This comes
+  //    first and does not depend on the AI: a failure later must never leave a day blank.
+  try {
+    const backfilled = await supabaseAdmin.rpc("backfill_daily_picks");
+    if (backfilled.error) {
+      if (isMissingFunctionError(backfilled.error)) result.skipped.push("backfill-not-installed");
+      else result.errors.push(`backfill: ${backfilled.error.message}`);
+    }
+    await ensureDailyPick(date);
+  } catch (error) {
+    result.errors.push(`pick-today: ${(error as Error).message}`);
+  }
+
+  // 2. Keep the unused library stocked so future picks are always available.
   try {
     if ((await countUnusedFacts()) < 15) {
       result.factsGenerated = await topUpFacts(15, 8);
@@ -60,13 +79,12 @@ export async function prewarmTomorrow(): Promise<PrewarmResult> {
     result.errors.push(`facts: ${(error as Error).message}`);
   }
 
-  // 2. Reserve today's and tomorrow's picks (idempotent upserts).
+  // 2b. Reserve tomorrow's pick (after top-up so a fresh batch is available).
   try {
-    await ensureDailyPick(date);
     const fact = await ensureDailyPick(tomorrow);
     result.tomorrowFactSlug = fact?.slug ?? null;
   } catch (error) {
-    result.errors.push(`pick: ${(error as Error).message}`);
+    result.errors.push(`pick-tomorrow: ${(error as Error).message}`);
   }
 
   // 3. Generate the quiz questions those picks will need.

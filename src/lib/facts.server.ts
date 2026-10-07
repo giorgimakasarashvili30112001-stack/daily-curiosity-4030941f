@@ -97,8 +97,45 @@ export async function countUnusedFacts(): Promise<number> {
 }
 
 
-/** Returns the fact scheduled for `date`, scheduling one if none exists yet. */
+/**
+ * Returns true when a Supabase/PostgREST error means "that database function does not
+ * exist" (i.e. db/daily_picks.sql has not been run on this project yet), as opposed to
+ * a real failure. Pure, so it can be unit-tested.
+ */
+export function isMissingFunctionError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "PGRST202" || // PostgREST: function not found in schema cache
+    error.code === "42883" || // Postgres: undefined_function
+    message.includes("could not find the function")
+  );
+}
+
+/**
+ * Returns the fact scheduled for `date`, scheduling one if none exists yet.
+ *
+ * Preferred path: the atomic database function `ensure_daily_pick` (db/daily_picks.sql),
+ * the same one the hourly pg_cron job uses, so there is a single source of truth.
+ * If it is not installed yet (older database) or errors, falls back to the original
+ * client-side logic so the app keeps working.
+ */
 export async function ensureDailyPick(date: string): Promise<Fact | null> {
+  const rpc = await supabaseAdmin.rpc("ensure_daily_pick", { p_date: date });
+  if (!rpc.error) {
+    const id = rpc.data as string | null;
+    if (!id) return null;
+    const { data } = await supabaseAdmin.from("facts").select(FACT_COLUMNS).eq("id", id).maybeSingle();
+    return data ? toFact(data as Record<string, unknown>) : null;
+  }
+  if (!isMissingFunctionError(rpc.error)) {
+    console.error("ensure_daily_pick failed, using fallback:", rpc.error.message);
+  }
+  return ensureDailyPickClientSide(date);
+}
+
+/** Original client-side pick (not atomic across processes; kept as a fallback only). */
+async function ensureDailyPickClientSide(date: string): Promise<Fact | null> {
   const existing = await supabaseAdmin
     .from("facts")
     .select(FACT_COLUMNS)
