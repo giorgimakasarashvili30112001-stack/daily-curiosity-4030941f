@@ -91,12 +91,14 @@ A new explainer is chosen **every day, whether or not anyone opens the app.** Th
 done by two separate pieces; run both once in the Supabase SQL editor:
 
 1. **`db/daily_picks.sql` (required, no setup needed).** Creates database functions
-   and an hourly pg_cron job (`daily-pick`) that picks each day's explainer inside
-   the database, so it never depends on the website, Cloudflare or the AI. It also
-   **fills any missed days** (and does so immediately when you run it), and retries
-   within the hour if anything fails. If the library of unused explainers ever runs
-   out, the least recently featured one is re-featured as a copy rather than leaving
-   the day blank.
+   and a pg_cron job (`daily-pick`, once a day at 00:05 UTC) that picks each day's
+   explainer inside the database, so it never depends on the website, Cloudflare or
+   the AI. It also **fills any missed days** (and does so immediately when you run
+   it). If a nightly run ever fails, the day is still picked the first time someone
+   opens the app, and the next night's run fills in anything missed. If the library
+   of unused explainers ever runs out, the least recently featured one is
+   re-featured as a copy rather than leaving the day blank. Re-running the file is
+   safe, and replaces an older hourly version of the job if you ran that one.
 2. **`db/generated/daily_scheduler.sql`.** Run `npm run config:sync` first (it uses your
    `APP_URL`). It creates a pg_cron job (00:05 UTC) that calls `/api/public/prewarm`
    to top up the library with AI-written explainers and pre-generate quizzes.

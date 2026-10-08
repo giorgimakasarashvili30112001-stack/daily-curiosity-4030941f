@@ -11,11 +11,12 @@
 --   * public.backfill_daily_picks(n)    makes sure EVERY day from the first one
 --                                       up to today has an explainer, filling any
 --                                       missed days (looks back at most n days).
---   * pg_cron job "daily-pick"          runs backfill every hour at :05, so the new
---                                       day's explainer is chosen at 00:05 UTC and,
---                                       if anything ever fails, retried within the
---                                       hour. Runs entirely inside the database:
---                                       no website, Cloudflare, AI or visitor needed.
+--   * pg_cron job "daily-pick"          runs backfill ONCE A DAY at 00:05 UTC, so each new
+--                                       day's explainer is chosen as the day begins. It runs
+--                                       entirely inside the database: no website, Cloudflare,
+--                                       AI or visitor needed. If a run ever fails, the day is
+--                                       still picked the first time someone opens the app, and
+--                                       the next night's run fills in anything missed.
 --   * Runs a backfill right now, so missed days are filled immediately.
 --
 -- Selection rules (same as the app's old logic): an unused explainer (pick_date
@@ -161,11 +162,12 @@ grant execute on function public.ensure_daily_pick(date)   to service_role;
 grant execute on function public.backfill_daily_picks(int) to service_role;
 
 -- ----------------------------------------------------------------------------
--- Hourly job (minute 5). Re-running this file replaces the job of the same name.
+-- Daily job at 00:05 UTC. Re-running this file replaces the job of the same name
+-- (so it also replaces an older hourly version of this job).
 -- ----------------------------------------------------------------------------
 select cron.schedule(
   'daily-pick',
-  '5 * * * *',
+  '5 0 * * *',
   $$ select public.backfill_daily_picks(); $$
 );
 

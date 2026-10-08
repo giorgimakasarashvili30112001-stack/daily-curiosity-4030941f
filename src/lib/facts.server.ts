@@ -116,7 +116,7 @@ export function isMissingFunctionError(error: { code?: string; message?: string 
  * Returns the fact scheduled for `date`, scheduling one if none exists yet.
  *
  * Preferred path: the atomic database function `ensure_daily_pick` (db/daily_picks.sql),
- * the same one the hourly pg_cron job uses, so there is a single source of truth.
+ * the same one the daily pg_cron job uses, so there is a single source of truth.
  * If it is not installed yet (older database) or errors, falls back to the original
  * client-side logic so the app keeps working.
  */

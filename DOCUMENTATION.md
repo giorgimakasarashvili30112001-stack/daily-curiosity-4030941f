@@ -156,7 +156,7 @@ updates ship without a store release (an internet connection is required).
   failures and applies security headers (CSP, HSTS, frame and MIME protection)
   to every HTML response.
 - Daily pick: `db/daily_picks.sql` installs `ensure_daily_pick` / `backfill_daily_picks` and an
-  hourly pg_cron job so every day has an explainer even with no visitors.
+  daily pg_cron job (00:05 UTC) so every day has an explainer even with no visitors.
 - Content pre-generation: call `/api/public/prewarm` on a schedule with the
   bearer secret (`db/generated/daily_scheduler.sql` does this nightly).
 - Android: `.github/workflows/build-android.yml` builds debug/release APK and a
