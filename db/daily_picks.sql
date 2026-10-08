@@ -8,15 +8,21 @@
 --
 -- What this does:
 --   * public.ensure_daily_pick(date)    chooses that date's explainer, atomically.
---   * public.backfill_daily_picks(n)    makes sure EVERY day from the first one
---                                       up to today has an explainer, filling any
---                                       missed days (looks back at most n days).
---   * pg_cron job "daily-pick"          runs backfill ONCE A DAY at 00:05 UTC, so each new
---                                       day's explainer is chosen as the day begins. It runs
+--   * public.backfill_daily_picks(n)    makes sure EVERY day from the first one up to
+--                                       and INCLUDING TOMORROW has an explainer: fills
+--                                       any missed days and picks tomorrow's ahead of
+--                                       time (looks back at most n days).
+--   * pg_cron job "daily-pick"          runs backfill ONCE A DAY at 00:05 UTC: it chooses
+--                                       tomorrow's explainer a full day ahead, so today's
+--                                       is normally already chosen the night before. It runs
 --                                       entirely inside the database: no website, Cloudflare,
---                                       AI or visitor needed. If a run ever fails, the day is
---                                       still picked the first time someone opens the app, and
---                                       the next night's run fills in anything missed.
+--                                       AI or visitor needed. If a run ever fails, today's fact
+--                                       was already chosen the night before, the day is still
+--                                       picked on the first visit, and the next run fills in
+--                                       anything missed.
+--   * Row-level security                an explainer is invisible to the public until its date
+--                                       arrives (see "Hide upcoming content" below), so picking
+--                                       ahead never reveals tomorrow's fact early.
 --   * Runs a backfill right now, so missed days are filled immediately.
 --
 -- Selection rules (same as the app's old logic): an unused explainer (pick_date
@@ -122,9 +128,11 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- backfill_daily_picks: guarantees a pick for every day up to today.
+-- backfill_daily_picks: guarantees a pick for every day up to AND INCLUDING TOMORROW.
 -- Starts at the earliest day that ever had a pick (never invents history before
--- the app began) and looks back at most p_max_days days. Returns days filled.
+-- the app began) and looks back at most p_max_days days. Tomorrow is picked ahead
+-- of time but stays hidden until its date (row-level security, below).
+-- Returns the number of days filled.
 -- ----------------------------------------------------------------------------
 create or replace function public.backfill_daily_picks(p_max_days int default 30)
 returns int
@@ -134,6 +142,7 @@ set search_path = public, pg_temp
 as $$
 declare
   v_today date := (now() at time zone 'utc')::date;
+  v_last  date := (now() at time zone 'utc')::date + 1;   -- tomorrow
   v_first date;
   v_start date;
   v_day   date;
@@ -143,7 +152,7 @@ begin
   v_start := greatest(v_today - (greatest(p_max_days, 1) - 1), coalesce(v_first, v_today));
 
   -- Oldest first so the "not the same category two days running" rule holds.
-  for v_day in select d::date from generate_series(v_start, v_today, interval '1 day') as d loop
+  for v_day in select d::date from generate_series(v_start, v_last, interval '1 day') as d loop
     if not exists (select 1 from public.facts where pick_date = v_day) then
       if public.ensure_daily_pick(v_day) is not null then
         v_count := v_count + 1;
@@ -160,6 +169,36 @@ revoke all on function public.ensure_daily_pick(date)    from public, anon, auth
 revoke all on function public.backfill_daily_picks(int)  from public, anon, authenticated;
 grant execute on function public.ensure_daily_pick(date)   to service_role;
 grant execute on function public.backfill_daily_picks(int) to service_role;
+
+-- ----------------------------------------------------------------------------
+-- Hide upcoming content. Picking tomorrow's explainer ahead of time is only safe
+-- if nobody can read it before its date. The app's own pages already filter by
+-- date, but the database API (reachable with the public anon key) did not: both
+-- tables below were readable by everyone. Server code uses the service role,
+-- which bypasses these rules, so the app is unaffected.
+-- ----------------------------------------------------------------------------
+do $$
+begin
+  -- facts: the public may only read explainers whose date has arrived.
+  if to_regclass('public.facts') is not null then
+    alter table public.facts enable row level security;
+    drop policy if exists "Facts are readable by everyone" on public.facts;
+    drop policy if exists "Only featured facts are public" on public.facts;
+    create policy "Only featured facts are public" on public.facts
+      for select to anon, authenticated
+      using (pick_date is not null and pick_date <= (now() at time zone 'utc')::date);
+  end if;
+
+  -- quiz_questions: holds the CORRECT ANSWERS and questions pre-generated for
+  -- upcoming explainers. Only the server (service role) ever reads it, so the
+  -- public gets no access at all.
+  if to_regclass('public.quiz_questions') is not null then
+    alter table public.quiz_questions enable row level security;
+    drop policy if exists "Quiz questions are readable by everyone" on public.quiz_questions;
+    revoke select on public.quiz_questions from anon, authenticated;
+  end if;
+end;
+$$;
 
 -- ----------------------------------------------------------------------------
 -- Daily job at 00:05 UTC. Re-running this file replaces the job of the same name
@@ -179,6 +218,8 @@ select public.backfill_daily_picks() as days_filled;
 --   select pick_date, title from public.facts
 --    where pick_date is not null order by pick_date desc limit 10;   -- no gaps
 --   select count(*) as unused from public.facts where pick_date is null;
+--   select pick_date, title from public.facts
+--    where pick_date = (now() at time zone 'utc')::date + 1;         -- tomorrow, already chosen
 --   select * from cron.job where jobname = 'daily-pick';
 --   select * from cron.job_run_details order by start_time desc limit 10;
 -- ============================================================================

@@ -91,21 +91,26 @@ A new explainer is chosen **every day, whether or not anyone opens the app.** Th
 done by two separate pieces; run both once in the Supabase SQL editor:
 
 1. **`db/daily_picks.sql` (required, no setup needed).** Creates database functions
-   and a pg_cron job (`daily-pick`, once a day at 00:05 UTC) that picks each day's
-   explainer inside the database, so it never depends on the website, Cloudflare or
-   the AI. It also **fills any missed days** (and does so immediately when you run
-   it). If a nightly run ever fails, the day is still picked the first time someone
-   opens the app, and the next night's run fills in anything missed. If the library
-   of unused explainers ever runs out, the least recently featured one is
-   re-featured as a copy rather than leaving the day blank. Re-running the file is
-   safe, and replaces an older hourly version of the job if you ran that one.
+   and a pg_cron job (`daily-pick`, once a day at 00:05 UTC) that chooses
+   **tomorrow's explainer a day ahead**, so today's is normally already chosen the
+   night before. It runs inside the database and never depends on the website,
+   Cloudflare or the AI. It also **fills any missed days** (and does so immediately
+   when you run it). If a run ever fails, today's fact was already chosen the night
+   before, the day is still picked on the first visit, and the next run fills in
+   anything missed. If the library of unused explainers runs out, the least recently
+   featured one is re-featured as a copy rather than leaving the day blank.
+   **Upcoming explainers stay hidden until their date** (UTC): the same file
+   tightens row-level security so the public API only returns explainers whose date
+   has arrived, and makes `quiz_questions` server-only (it holds the correct answers
+   and pre-generated future questions). Re-running the file is safe, and replaces an
+   older version of the job.
 2. **`db/generated/daily_scheduler.sql`.** Run `npm run config:sync` first (it uses your
    `APP_URL`). It creates a pg_cron job (00:05 UTC) that calls `/api/public/prewarm`
    to top up the library with AI-written explainers and pre-generate quizzes.
    (Don't run the `.tpl` template directly.)
 
 Check it is working: `select pick_date, title from facts where pick_date is not null
-order by pick_date desc limit 10;` (no gaps), `select * from cron.job_run_details
+order by pick_date desc limit 10;` (no gaps, and tomorrow's date is already there), `select * from cron.job_run_details
 order by start_time desc limit 10;`, and `select count(*) from facts where pick_date
 is null;` (unused explainers left; if this nears 0, check the prewarm job and
 `GEMINI_API_KEY`).

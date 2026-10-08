@@ -79,7 +79,8 @@ export async function prewarmTomorrow(): Promise<PrewarmResult> {
     result.errors.push(`facts: ${(error as Error).message}`);
   }
 
-  // 2b. Reserve tomorrow's pick (after top-up so a fresh batch is available).
+  // 2b. Reserve tomorrow's pick (the database job also does this; this is a belt-and-braces
+  //     second chance after the top-up, so a fresh batch is available). Hidden until its date.
   try {
     const fact = await ensureDailyPick(tomorrow);
     result.tomorrowFactSlug = fact?.slug ?? null;
