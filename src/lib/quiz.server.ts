@@ -1,3 +1,4 @@
+import { generateJson } from "./ai.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { supabaseAdmin as serverClient } from "@/integrations/supabase/client.server";
@@ -86,64 +87,34 @@ export async function generateQuestion(
   fact: FactLike,
   questionIndex = 0,
 ): Promise<QuizQuestionRow | null> {
-  const apiKey = process.env["GEMINI_API_KEY"];
-  if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
-
   const stepText = fact.steps.map((s) => `${s.heading}: ${s.body}`).join("\n");
   const asked = await previousPrompts(fact.id, questionIndex);
   const avoid = asked.length
     ? `\n\nThese questions were already asked about this explainer — write a clearly different one, in the same style, testing another part of the mechanism:\n${asked.map((p) => `- ${p}`).join("\n")}`
     : "";
 
-  const response = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: "You write one crisp multiple-choice comprehension question about a short explainer. Test understanding of the mechanism, not trivia recall. No emoji.",
-            },
-          ],
+  let content: string | null;
+  try {
+    content = await generateJson({
+      models: ["gemini-flash-lite-latest"],
+      system:
+        "You write one crisp multiple-choice comprehension question about a short explainer. Test understanding of the mechanism, not trivia recall. No emoji.",
+      user: `Explainer title: ${fact.title}\nIntro: ${fact.intro}\nSteps:\n${stepText}\nSurprising detail: ${fact.surprising_detail}\n\nWrite one question with exactly 4 short options (under 80 characters each), one clearly correct, three plausible but wrong. correct_index is the 0-based index of the correct option. explanation is one sentence saying why it's right.${avoid}`,
+      schema: {
+        type: "object",
+        properties: {
+          prompt: { type: "string" },
+          options: { type: "array", items: { type: "string" } },
+          correct_index: { type: "integer" },
+          explanation: { type: "string" },
         },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Explainer title: ${fact.title}\nIntro: ${fact.intro}\nSteps:\n${stepText}\nSurprising detail: ${fact.surprising_detail}\n\nWrite one question with exactly 4 short options (under 80 characters each), one clearly correct, three plausible but wrong. correct_index is the 0-based index of the correct option. explanation is one sentence saying why it's right.${avoid}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              prompt: { type: "string" },
-              options: { type: "array", items: { type: "string" } },
-              correct_index: { type: "integer" },
-              explanation: { type: "string" },
-            },
-            required: ["prompt", "options", "correct_index", "explanation"],
-          },
-        },
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    console.error("quiz generation failed", response.status, await response.text());
+        required: ["prompt", "options", "correct_index", "explanation"],
+      },
+    });
+  } catch (error) {
+    console.error("quiz generation failed", (error as Error).message);
     return loadQuestion(fact.id, questionIndex);
   }
-
-  const payload = (await response.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-  };
-  const content = payload.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
   if (!content) return loadQuestion(fact.id, questionIndex);
 
   let parsed: GeneratedQuiz;

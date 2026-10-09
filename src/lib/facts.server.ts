@@ -290,8 +290,19 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
 
   if (fresh.length === 0) return 0;
 
-  const { error } = await supabaseAdmin.from("facts").upsert(fresh, { onConflict: "slug" });
-  if (error) throw error;
+  let { error } = await supabaseAdmin.from("facts").upsert(fresh, { onConflict: "slug" });
+  if (error && (error.code === "23502" || /question_type/i.test(error.message))) {
+    // Older databases still have the legacy NOT NULL `question_type` column
+    // (db/drop_unused_fact_columns.sql removes it). Derive it from the title.
+    const withType = fresh.map((f) => ({
+      ...f,
+      question_type: /^what\b/i.test(f.title) ? "what" : "how",
+    }));
+    ({ error } = await supabaseAdmin
+      .from("facts")
+      .upsert(withType as unknown as typeof fresh, { onConflict: "slug" }));
+  }
+  if (error) throw new Error(`saving generated facts failed: ${error.message}`);
   return fresh.length;
 
 }
