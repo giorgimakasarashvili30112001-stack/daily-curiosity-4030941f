@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -164,6 +164,11 @@ function ProfilePage() {
       >
         Sign out
       </button>
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        <Link to="/privacy" className="underline underline-offset-2">
+          Privacy Policy
+        </Link>
+      </p>
     </AppShell>
   );
 }

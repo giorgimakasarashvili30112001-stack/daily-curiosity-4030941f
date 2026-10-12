@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as FactSlugRouteImport } from './routes/fact.$slug'
@@ -36,6 +37,11 @@ const ArchiveRoute = ArchiveRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/archive'
     | '/auth'
+    | '/privacy'
     | '/profile'
     | '/saved'
     | '/fact/$slug'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/archive'
     | '/auth'
+    | '/privacy'
     | '/profile'
     | '/saved'
     | '/fact/$slug'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/archive'
     | '/auth'
+    | '/privacy'
     | '/_authenticated/profile'
     | '/_authenticated/saved'
     | '/fact/$slug'
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ArchiveRoute: typeof ArchiveRoute
   AuthRoute: typeof AuthRoute
+  PrivacyRoute: typeof PrivacyRoute
   FactSlugRoute: typeof FactSlugRoute
   ApiPublicPrewarmRoute: typeof ApiPublicPrewarmRoute
   ApiPublicTodayTitleRoute: typeof ApiPublicTodayTitleRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/profile': {
@@ -226,6 +246,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ArchiveRoute: ArchiveRoute,
   AuthRoute: AuthRoute,
+  PrivacyRoute: PrivacyRoute,
   FactSlugRoute: FactSlugRoute,
   ApiPublicPrewarmRoute: ApiPublicPrewarmRoute,
   ApiPublicTodayTitleRoute: ApiPublicTodayTitleRoute,
