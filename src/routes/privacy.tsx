@@ -46,9 +46,9 @@ function PrivacyPage() {
         <H>Information we collect</H>
         <ul className="mt-2 list-disc pl-5 text-sm leading-relaxed text-muted-foreground">
           <Li>
-            <b>Account details</b> — your email address and a password (stored only as a hash by
-            our authentication provider), or, if you choose "Continue with Google", your Google
-            account email and name. We never see your Google password.
+            <b>Account details</b> — your email address and a password (stored only as a hash by our
+            authentication provider), or, if you choose "Continue with Google", your Google account
+            email and name. We never see your Google password.
           </Li>
           <Li>
             <b>Your activity</b> — your display name, streak, longest streak, last visit date,
@@ -63,24 +63,40 @@ function PrivacyPage() {
             <b>Technical logs</b> — our hosting and database providers may process your IP address
             and basic request data to deliver the service and prevent abuse.
           </Li>
+          <Li>
+            <b>Ad data</b> — collected directly by the advertising provider on your device, not by
+            us (see "Advertising").
+          </Li>
         </ul>
         <P>
-          We do not collect your precise location, contacts, photos or microphone, and we do not
-          show ads or sell your data.
+          We do not collect your precise location, contacts, photos or microphone. We do not sell
+          your personal data, and we do not use it for advertising or share it with advertisers.
+        </P>
+
+        <H>Advertising</H>
+        <P>
+          Daily How shows ads. Ads are provided by a third-party advertising service, which may
+          collect certain information from your device itself, such as your IP address, device and
+          app identifiers (for example the Android advertising ID) and ad interactions, in order to
+          serve and measure ads and prevent fraud. We do not give the ad service your email, name,
+          streak, quiz results or any other account data. The ad provider acts under its own privacy
+          policy. On Android you can reset your advertising ID or opt out of ad personalization in
+          Settings → Google → Ads, and in some regions the app will ask for your consent before
+          showing personalized ads.
         </P>
 
         <H>How we use it</H>
         <P>
-          To sign you in, keep your streak, coins and saved explainers in sync across devices,
-          grade quizzes, send the optional reminders you turn on, and keep the service secure and
-          working.
+          To sign you in, keep your streak, coins and saved explainers in sync across devices, grade
+          quizzes, send the optional reminders you turn on, show ads that help keep the app free,
+          and keep the service secure and working. We never use your account data for advertising.
         </P>
 
         <H>Reminders (Android)</H>
         <P>
           If you turn reminders on, the app asks for notification permission and schedules local
-          notifications on your device. They are created on the device itself; no notification
-          token or push service is used. You can turn them off in the app or in Android settings.
+          notifications on your device. They are created on the device itself; no notification token
+          or push service is used. You can turn them off in the app or in Android settings.
         </P>
 
         <H>Who processes data for us</H>
@@ -89,44 +105,51 @@ function PrivacyPage() {
           <Li>Cloudflare — website hosting and delivery.</Li>
           <Li>Google — optional Google sign-in. Google's own privacy policy applies to it.</Li>
           <Li>
-            Google Gemini API — used to write the explainers and quizzes. No personal data about
-            you is sent to it.
+            Our advertising provider (for example Google AdMob) — shows ads, as described under
+            "Advertising" above.
+          </Li>
+          <Li>
+            Google Gemini API — used to write the explainers and quizzes. No personal data about you
+            is sent to it.
           </Li>
         </ul>
         <P>
-          These providers process data only to provide their service to us. Data may be processed
-          in countries other than your own.
+          These providers process data only to provide their service to us. Data may be processed in
+          countries other than your own.
         </P>
 
         <H>Retention and deletion</H>
         <P>
           We keep your account data until you ask us to delete it. To delete your account and all
           data linked to it (profile, streak, coins, quiz results, saved explainers), email{" "}
-          <a className="underline" href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Daily%20How%20account`}>
+          <a
+            className="underline"
+            href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Daily%20How%20account`}
+          >
             {CONTACT_EMAIL}
           </a>{" "}
-          from the address you signed up with. We delete it within 30 days. Data on your device
-          is removed by clearing the app's storage or uninstalling the app.
+          from the address you signed up with. We delete it within 30 days. Data on your device is
+          removed by clearing the app's storage or uninstalling the app.
         </P>
 
         <H>Your rights</H>
         <P>
-          Depending on where you live, you may have the right to access, correct, export or
-          delete your data, and to object to or restrict how it is used. Contact us at the address
-          below and we will respond.
+          Depending on where you live, you may have the right to access, correct, export or delete
+          your data, and to object to or restrict how it is used. Contact us at the address below
+          and we will respond.
         </P>
 
         <H>Children</H>
         <P>
-          Daily How is not directed to children under 13 (or the minimum age in your country),
-          and we do not knowingly collect their data. If you believe a child has created an
-          account, contact us and we will delete it.
+          Daily How is not directed to children under 13 (or the minimum age in your country), and
+          we do not knowingly collect their data. If you believe a child has created an account,
+          contact us and we will delete it.
         </P>
 
         <H>Security</H>
         <P>
-          Data is sent over HTTPS, and database access rules limit each signed-in user to their
-          own records. No system is perfectly secure, but we take reasonable steps to protect it.
+          Data is sent over HTTPS, and database access rules limit each signed-in user to their own
+          records. No system is perfectly secure, but we take reasonable steps to protect it.
         </P>
 
         <H>Changes</H>
