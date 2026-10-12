@@ -62,11 +62,7 @@ export async function loadProfileRow(supabase: Db, userId: string): Promise<Prof
 }
 
 /** Writes a profile patch; retries without the newer columns if they are absent. */
-export async function saveProfileRow(
-  supabase: Db,
-  userId: string,
-  patch: Record<string, unknown>,
-) {
+export async function saveProfileRow(supabase: Db, userId: string, patch: Record<string, unknown>) {
   const payload: Record<string, unknown> = {
     id: userId,
     updated_at: new Date().toISOString(),
@@ -77,11 +73,8 @@ export async function saveProfileRow(
 
   const { saved_days: _d, streak_anchor: _a, ...rest } = payload;
   if (Object.keys(rest).length === Object.keys(payload).length) throw error;
-  const { error: retryError } = await supabase
-    .from("profiles")
-    .upsert(rest, { onConflict: "id" });
+  const { error: retryError } = await supabase.from("profiles").upsert(rest, { onConflict: "id" });
   if (retryError) throw retryError;
-
 }
 
 /** Latest day the user answered a question correctly, straight from quiz_attempts. */

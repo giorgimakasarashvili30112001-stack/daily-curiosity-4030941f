@@ -8,7 +8,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-
 /** Profile summary shown on the account/profile screen. */
 export type ProfileState = {
   displayName: string | null;
@@ -19,7 +18,6 @@ export type ProfileState = {
   streakSaved?: boolean;
   streakLost?: boolean;
 };
-
 
 /** A fact the user has bookmarked, with the timestamp it was saved. */
 export type SavedFact = {
@@ -65,8 +63,6 @@ export const getProfile = createServerFn({ method: "GET" })
     };
   });
 
-
-
 /**
  * Updates (or clears) the signed-in user's display name.
  *
@@ -107,9 +103,12 @@ export const getSavedFacts = createServerFn({ method: "GET" })
 
     return (data ?? [])
       .map((row) => {
-        const fact = row.facts as
-          | { slug: string; title: string; category: string; hook: string }
-          | null;
+        const fact = row.facts as {
+          slug: string;
+          title: string;
+          category: string;
+          hook: string;
+        } | null;
         if (!fact) return null;
         return { ...fact, savedAt: row.created_at };
       })

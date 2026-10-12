@@ -72,6 +72,23 @@ write(
       .replaceAll("{{APP_URL}}", appUrl),
 );
 
+// AdMob application id for the Android manifest (test id is committed as the default).
+const admobAppId = process.env["ADMOB_APP_ID"]?.trim();
+if (admobAppId) {
+  if (!/^ca-app-pub-\d{16}~\d{10}$/.test(admobAppId)) {
+    console.error(`✗ ADMOB_APP_ID looks wrong (expected ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX).`);
+    process.exit(1);
+  }
+  write(
+    "android/app/src/main/res/values/admob.xml",
+    `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="admob_app_id">${admobAppId}</string>
+</resources>
+`,
+  );
+}
+
 // Supabase CLI project id = the subdomain of SUPABASE_URL.
 const supabaseUrl = process.env["SUPABASE_URL"]?.trim();
 if (supabaseUrl) {

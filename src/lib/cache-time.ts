@@ -17,15 +17,7 @@
  */
 export function msUntilUtcMidnight(): number {
   const now = new Date();
-  const next = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate() + 1,
-    0,
-    0,
-    0,
-    0,
-  );
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0);
   return Math.max(1000, next - now.getTime());
 }
 

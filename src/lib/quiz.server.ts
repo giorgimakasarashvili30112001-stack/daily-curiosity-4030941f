@@ -169,7 +169,6 @@ async function loadFact(factDate: string): Promise<{ fact: FactLike; slug: strin
   const raw = data as Record<string, unknown> | null | undefined;
   if (!raw) return null;
 
-
   return {
     slug: String(raw["slug"]),
     fact: {
@@ -191,14 +190,16 @@ async function loadFact(factDate: string): Promise<{ fact: FactLike; slug: strin
 export async function getQuestionForDate(
   factDate: string,
   questionIndex = 0,
-): Promise<{ question: QuizQuestionRow; fact: { id: string; slug: string; title: string } } | null> {
+): Promise<{
+  question: QuizQuestionRow;
+  fact: { id: string; slug: string; title: string };
+} | null> {
   const loaded = await loadFact(factDate);
   if (!loaded) return null;
   const { fact, slug } = loaded;
 
   const question =
-    (await loadQuestion(fact.id, questionIndex)) ??
-    (await generateQuestion(fact, questionIndex));
+    (await loadQuestion(fact.id, questionIndex)) ?? (await generateQuestion(fact, questionIndex));
   if (!question) return null;
 
   return { question, fact: { id: fact.id, slug, title: fact.title } };

@@ -32,8 +32,7 @@ export type Fact = {
  * The exact column list every fact read requests — keeps queries narrow so the
  * database never ships columns the UI does not render.
  */
-export const FACT_COLUMNS =
-  "id, title, slug, category, hook, intro, steps, surprising_detail";
+export const FACT_COLUMNS = "id, title, slug, category, hook, intro, steps, surprising_detail";
 
 /**
  * Today's date in UTC as `YYYY-MM-DD`. UTC (not device time) is the scheduling
@@ -96,7 +95,6 @@ export async function countUnusedFacts(): Promise<number> {
   return count ?? 0;
 }
 
-
 /**
  * Returns true when a Supabase/PostgREST error means "that database function does not
  * exist" (i.e. db/daily_picks.sql has not been run on this project yet), as opposed to
@@ -125,7 +123,11 @@ export async function ensureDailyPick(date: string): Promise<Fact | null> {
   if (!rpc.error) {
     const id = rpc.data as string | null;
     if (!id) return null;
-    const { data } = await supabaseAdmin.from("facts").select(FACT_COLUMNS).eq("id", id).maybeSingle();
+    const { data } = await supabaseAdmin
+      .from("facts")
+      .select(FACT_COLUMNS)
+      .eq("id", id)
+      .maybeSingle();
     return data ? toFact(data as Record<string, unknown>) : null;
   }
   if (!isMissingFunctionError(rpc.error)) {
@@ -183,7 +185,6 @@ async function ensureDailyPickClientSide(date: string): Promise<Fact | null> {
     .maybeSingle();
   return settled.data ? toFact(settled.data as Record<string, unknown>) : null;
 }
-
 
 type GeneratedFact = {
   title: string;
@@ -279,7 +280,11 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
 
   // Drop titles that already exist (or repeat within the batch) so the daily
   // rotation can never serve the same explainer twice under a different slug.
-  const normalize = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalize = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
   const seen = new Set(existingTitles.map(normalize));
   const fresh = rows.filter((f) => {
     const key = normalize(f.title);
@@ -304,5 +309,4 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
   }
   if (error) throw new Error(`saving generated facts failed: ${error.message}`);
   return fresh.length;
-
 }

@@ -54,9 +54,8 @@ export type ArchiveEntry = {
  */
 export const getTodayFact = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ date: string; fact: Fact | null }> => {
-    const { ensureDailyPick, todayUtc, topUpFacts, countUnusedFacts } = await import(
-      "./facts.server"
-    );
+    const { ensureDailyPick, todayUtc, topUpFacts, countUnusedFacts } =
+      await import("./facts.server");
     const date = todayUtc();
 
     let fact = await ensureDailyPick(date);

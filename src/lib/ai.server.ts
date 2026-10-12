@@ -109,5 +109,7 @@ export async function generateJson(opts: {
     }
   }
 
-  throw new Error(`AI request failed after retries on every model. ${failures.slice(-6).join(" | ")}`);
+  throw new Error(
+    `AI request failed after retries on every model. ${failures.slice(-6).join(" | ")}`,
+  );
 }

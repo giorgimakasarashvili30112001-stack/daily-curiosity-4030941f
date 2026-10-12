@@ -35,7 +35,10 @@ function isCacheable(query: Query): boolean {
   return query.state.status === "success" && query.state.data !== undefined;
 }
 
-type DehydratedQuery = { queryKey?: readonly unknown[]; state?: { status?: string; data?: unknown } };
+type DehydratedQuery = {
+  queryKey?: readonly unknown[];
+  state?: { status?: string; data?: unknown };
+};
 type Stored = { timestamp: number; state: { queries?: DehydratedQuery[] } };
 
 /**
@@ -87,7 +90,6 @@ function sanitize(state: Stored["state"]) {
  */
 export function setupFactCache(queryClient: QueryClient) {
   if (typeof window === "undefined") return;
-
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);

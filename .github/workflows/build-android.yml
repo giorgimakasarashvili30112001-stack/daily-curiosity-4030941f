@@ -67,7 +67,11 @@ jobs:
         env:
           # Repository variable: Settings > Secrets and variables > Actions > Variables
           APP_URL: ${{ vars.APP_URL }}
-        run: npx cap sync android
+          # Optional repository variable; without it Google's test app id is used.
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+        run: |
+          node scripts/sync-config.mjs
+          npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew

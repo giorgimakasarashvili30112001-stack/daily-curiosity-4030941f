@@ -9,7 +9,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-
 /** Hard cap on follow-up questions generated per explainer. */
 export const MAX_QUESTION_INDEX = 9;
 
@@ -184,7 +183,6 @@ export const submitQuizAnswer = createServerFn({ method: "POST" })
     const streakSaved = settlement.streakSaved;
     let coinsEarned = 0;
 
-
     if (error) {
       // Duplicate insert: re-fetch and return the attempt that already exists
       // for this question/date rather than double-counting rewards.
@@ -230,9 +228,7 @@ export const submitQuizAnswer = createServerFn({ method: "POST" })
         coins,
         saved_days: settlement.savedDays,
       });
-
     }
-
 
     return {
       questionIndex: data.questionIndex,
@@ -308,9 +304,7 @@ export const getQuizAttempt = createServerFn({ method: "GET" })
 export const getStreakCalendar = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z
-      .object({ month: z.string().regex(/^\d{4}-\d{2}$/) })
-      .parse(input),
+    z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }).parse(input),
   )
   .handler(async ({ data, context }): Promise<{ correct: string[]; saved: string[] }> => {
     const [year, month] = data.month.split("-").map(Number);
@@ -325,11 +319,7 @@ export const getStreakCalendar = createServerFn({ method: "GET" })
         .eq("is_correct", true)
         .gte("quiz_date", start)
         .lt("quiz_date", end),
-      context.supabase
-        .from("profiles")
-        .select("saved_days")
-        .eq("id", context.userId)
-        .maybeSingle(),
+      context.supabase.from("profiles").select("saved_days").eq("id", context.userId).maybeSingle(),
     ]);
 
     const saved = ((profile?.saved_days ?? []) as string[])
@@ -341,7 +331,6 @@ export const getStreakCalendar = createServerFn({ method: "GET" })
       saved: [...new Set(saved)],
     };
   });
-
 
 /**
  * Returns lifetime quiz stats (answered/correct counts plus current

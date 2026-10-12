@@ -75,14 +75,15 @@ function PrivacyPage() {
 
         <H>Advertising</H>
         <P>
-          Daily How shows ads. Ads are provided by Google AdMob, a third-party advertising service,
-          which may collect certain information from your device itself, such as your IP address,
-          device and app identifiers (for example the Android advertising ID) and ad interactions,
-          in order to serve and measure ads and prevent fraud. We do not give the ad service your
-          email, name, streak, quiz results or any other account data. Google acts under its own
-          privacy policy. On Android you can reset your advertising ID or opt out of ad
-          personalization in Settings → Google → Ads, and in some regions the app will ask for your
-          consent before showing personalized ads.
+          Daily How offers optional rewarded video ads: you can choose to watch one to earn coins,
+          and no ads appear otherwise. Ads are provided by Google AdMob, a third-party advertising
+          service, which may collect certain information from your device itself, such as your IP
+          address, device and app identifiers (for example the Android advertising ID) and ad
+          interactions, in order to serve and measure ads and prevent fraud. We do not give the ad
+          service your email, name, streak, quiz results or any other account data. Google acts
+          under its own privacy policy. On Android you can reset your advertising ID or opt out of
+          ad personalization in Settings → Google → Ads, and in some regions the app will ask for
+          your consent before showing personalized ads.
         </P>
 
         <H>How we use it</H>

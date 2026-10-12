@@ -17,6 +17,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as FactSlugRouteImport } from './routes/fact.$slug'
+import { Route as ApiPublicAdmobSsvRouteImport } from './routes/api/public/admob-ssv'
 import { Route as ApiPublicPrewarmRouteImport } from './routes/api/public/prewarm'
 import { Route as ApiPublicTodayTitleRouteImport } from './routes/api/public/today-title'
 
@@ -59,6 +60,11 @@ const FactSlugRoute = FactSlugRouteImport.update({
   path: '/fact/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdmobSsvRoute = ApiPublicAdmobSsvRouteImport.update({
+  id: '/api/public/admob-ssv',
+  path: '/api/public/admob-ssv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPrewarmRoute = ApiPublicPrewarmRouteImport.update({
   id: '/api/public/prewarm',
   path: '/api/public/prewarm',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
+  '/api/public/admob-ssv': typeof ApiPublicAdmobSsvRoute
   '/api/public/prewarm': typeof ApiPublicPrewarmRoute
   '/api/public/today-title': typeof ApiPublicTodayTitleRoute
 }
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
+  '/api/public/admob-ssv': typeof ApiPublicAdmobSsvRoute
   '/api/public/prewarm': typeof ApiPublicPrewarmRoute
   '/api/public/today-title': typeof ApiPublicTodayTitleRoute
 }
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/fact/$slug': typeof FactSlugRoute
+  '/api/public/admob-ssv': typeof ApiPublicAdmobSsvRoute
   '/api/public/prewarm': typeof ApiPublicPrewarmRoute
   '/api/public/today-title': typeof ApiPublicTodayTitleRoute
 }
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/fact/$slug'
+    | '/api/public/admob-ssv'
     | '/api/public/prewarm'
     | '/api/public/today-title'
   fileRoutesByTo: FileRoutesByTo
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/fact/$slug'
+    | '/api/public/admob-ssv'
     | '/api/public/prewarm'
     | '/api/public/today-title'
   id:
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/saved'
     | '/fact/$slug'
+    | '/api/public/admob-ssv'
     | '/api/public/prewarm'
     | '/api/public/today-title'
   fileRoutesById: FileRoutesById
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   FactSlugRoute: typeof FactSlugRoute
+  ApiPublicAdmobSsvRoute: typeof ApiPublicAdmobSsvRoute
   ApiPublicPrewarmRoute: typeof ApiPublicPrewarmRoute
   ApiPublicTodayTitleRoute: typeof ApiPublicTodayTitleRoute
 }
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FactSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admob-ssv': {
+      id: '/api/public/admob-ssv'
+      path: '/api/public/admob-ssv'
+      fullPath: '/api/public/admob-ssv'
+      preLoaderRoute: typeof ApiPublicAdmobSsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/prewarm': {
       id: '/api/public/prewarm'
       path: '/api/public/prewarm'
@@ -248,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   FactSlugRoute: FactSlugRoute,
+  ApiPublicAdmobSsvRoute: ApiPublicAdmobSsvRoute,
   ApiPublicPrewarmRoute: ApiPublicPrewarmRoute,
   ApiPublicTodayTitleRoute: ApiPublicTodayTitleRoute,
 }
