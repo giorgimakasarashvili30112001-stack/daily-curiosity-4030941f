@@ -9,6 +9,7 @@ import { StreakIcon } from "@/components/StreakIcon";
 import { StreakCalendar } from "@/components/StreakCalendar";
 import { useServerFn } from "@tanstack/react-start";
 import { ShareSheet } from "@/components/ShareSheet";
+import { DeleteAccountButton } from "@/components/DeleteAccount";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { getProfile, updateDisplayName } from "@/lib/user.functions";
@@ -164,6 +165,9 @@ function ProfilePage() {
       >
         Sign out
       </button>
+      <div className="mt-3">
+        <DeleteAccountButton />
+      </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">
         <Link to="/privacy" className="underline underline-offset-2">
           Privacy Policy

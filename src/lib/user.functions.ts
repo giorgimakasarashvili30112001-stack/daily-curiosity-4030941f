@@ -171,3 +171,37 @@ export const toggleFavorite = createServerFn({ method: "POST" })
     if (error) throw error;
     return { saved: true };
   });
+
+/**
+ * Permanently deletes the signed-in user's account and everything linked to it
+ * (profile, streak, coins, quiz answers, saved explainers, ad-reward records),
+ * then removes the sign-in itself.
+ *
+ * Params: `{ confirm: "DELETE" }` — a guard against accidental calls.
+ * Returns: `{ ok: true }`. Irreversible.
+ */
+export const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ confirm: z.literal("DELETE") }).parse(input))
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
+
+    const steps: [string, string][] = [
+      ["favorites", "user_id"],
+      ["quiz_attempts", "user_id"],
+      ["ad_rewards", "user_id"],
+      ["profiles", "id"],
+    ];
+    for (const [table, column] of steps) {
+      const { error } = await db.from(table).delete().eq(column, userId);
+      // 42P01 / PGRST205: table not created yet (e.g. ad_rewards before its SQL was run).
+      if (error && error.code !== "42P01" && error.code !== "PGRST205") {
+        throw new Error(`Could not delete your ${table}: ${error.message}`);
+      }
+    }
+    const { error } = await db.auth.admin.deleteUser(userId);
+    if (error) throw new Error(`Could not delete your sign-in: ${error.message}`);
+    return { ok: true as const };
+  });

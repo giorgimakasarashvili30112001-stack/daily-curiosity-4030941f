@@ -118,16 +118,21 @@ function PrivacyPage() {
 
         <H>Retention and deletion</H>
         <P>
-          We keep your account data until you ask us to delete it. To delete your account and all
-          data linked to it (profile, streak, coins, quiz results, saved explainers), email{" "}
+          We keep your account data until you delete it. You can delete your account and all data
+          linked to it (profile, streak, coins, quiz results, saved explainers) yourself, at any
+          time, in the app under Profile → Delete my account, or on the web at{" "}
+          <Link to="/delete-account" className="underline">
+            /delete-account
+          </Link>
+          . Deletion is immediate. If you can't sign in, email{" "}
           <a
             className="underline"
             href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Daily%20How%20account`}
           >
             {CONTACT_EMAIL}
           </a>{" "}
-          from the address you signed up with. We delete it within 30 days. Data on your device is
-          removed by clearing the app's storage or uninstalling the app.
+          from the address you signed up with and we delete it within 30 days. Data on your device
+          is removed by clearing the app's storage or uninstalling the app.
         </P>
 
         <H>Your rights</H>
