@@ -17,13 +17,6 @@ import { getQuizStats } from "@/lib/quiz.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdConfig } from "@/lib/ads.functions";
 import { adsSupported, playRewardedAd, REWARD_COINS } from "@/lib/rewarded-ad";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 /**
  * Route: `/profile` — signed-in user's profile screen (requires auth via
@@ -229,12 +222,10 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
 }
 
 /**
- * Coins card. Tapping it opens a modal with the balance and a "Watch an ad" button that
- * plays a rewarded video in the Android app. The +3 coins are credited by the server once
+ * Coins card with a "More coins" button that plays a rewarded video in the Android app. The +3 coins are credited by the server once
  * Google confirms the ad was watched, so we wait for the balance to change.
  */
 function CoinsCard({ coins }: { coins: number }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const fetchAdConfig = useServerFn(getAdConfig);
   const fetchQuizStats = useServerFn(getQuizStats);
@@ -281,51 +272,28 @@ function CoinsCard({ coins }: { coins: number }) {
   };
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mt-5 block w-full rounded-3xl border border-border bg-card p-6 text-center transition-colors hover:bg-secondary"
-      >
-        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Coins</p>
-        <p className="mt-2 flex items-center justify-center gap-2 text-display text-4xl text-primary">
-          <Coins className="h-7 w-7" aria-hidden="true" />
-          {coins}
+    <div className="mt-5 rounded-3xl border border-border bg-card p-6 text-center">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Coins</p>
+      <p className="mt-2 flex items-center justify-center gap-2 text-display text-4xl text-primary">
+        <Coins className="h-7 w-7" aria-hidden="true" />
+        {coins}
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground">1 coin per correct answer</p>
+      {native ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void watch()}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          <PlayCircle className="h-5 w-5" aria-hidden="true" />
+          {busy ? "Please wait…" : `More coins · watch an ad (+${REWARD_COINS})`}
+        </button>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Watch an ad for +{REWARD_COINS} coins in the Android app.
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          1 coin per correct answer · tap to earn more
-        </p>
-      </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-display text-xl">Your coins</DialogTitle>
-            <DialogDescription>
-              Coins save your streak when you miss a day. You earn 1 for every correct answer.
-            </DialogDescription>
-          </DialogHeader>
-          <p className="flex items-center justify-center gap-2 text-display text-5xl text-primary">
-            <Coins className="h-9 w-9" aria-hidden="true" />
-            {coins}
-          </p>
-          {native ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void watch()}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              <PlayCircle className="h-5 w-5" aria-hidden="true" />
-              {busy ? "Please wait…" : `Watch an ad · +${REWARD_COINS} coins`}
-            </button>
-          ) : (
-            <p className="text-center text-sm text-muted-foreground">
-              Watching ads for coins is available in the Android app.
-            </p>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+      )}
+    </div>
   );
 }
