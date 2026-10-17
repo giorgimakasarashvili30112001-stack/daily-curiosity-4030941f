@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { hideNativeSplash } from "@/lib/native-splash";
 import { markHydrated } from "@/lib/hydrated";
+import { refreshRemindersIfEnabled } from "@/lib/notifications";
 
 import appCss from "../styles.css?url";
 // Hashed URLs of the latin font files, preloaded so they download in parallel with the CSS.
@@ -189,6 +190,14 @@ function RootComponent() {
   useEffect(() => {
     void hideNativeSplash();
     markHydrated(); // later page mounts (tab switches) may render cached data immediately
+
+    // Keep the daily reminders scheduled even if the user never opens Profile.
+    void refreshRemindersIfEnabled();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshRemindersIfEnabled();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   useEffect(() => {

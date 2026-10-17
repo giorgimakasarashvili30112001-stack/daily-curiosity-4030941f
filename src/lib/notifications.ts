@@ -5,7 +5,7 @@ export const REMINDER_PREF_KEY = "the-daily-how-reminders-enabled";
 /** Local times (24h) the reminders fire on the device. */
 const SLOTS = [11, 19] as const;
 /** How many days ahead we keep notifications scheduled. */
-const DAYS_AHEAD = 3;
+const DAYS_AHEAD = 14;
 
 export type ReminderStatus =
   | "unsupported" // running in a browser, not the native app
@@ -19,6 +19,24 @@ export function isNativeApp(): boolean {
 export function readReminderPref(): boolean {
   if (typeof localStorage === "undefined") return false;
   return localStorage.getItem(REMINDER_PREF_KEY) === "true";
+}
+
+const DONE_KEY = "daily-how-quiz-done-date";
+
+/** Remembers (on this device) the local date the daily streak was earned. */
+function readDoneDate(): string | null {
+  try {
+    return localStorage.getItem(DONE_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeDoneDate(key: string): void {
+  try {
+    localStorage.setItem(DONE_KEY, key);
+  } catch {
+    // storage unavailable: reminders just stay scheduled
+  }
 }
 
 export function writeReminderPref(enabled: boolean): void {
@@ -95,13 +113,16 @@ export async function syncDailyReminders(options: {
 
   const now = new Date();
   const todayKey = localDateKey(now);
-  const doneToday = options.lastCorrectDate === todayKey;
+  if (options.lastCorrectDate === todayKey) writeDoneDate(todayKey);
+  const doneToday = options.lastCorrectDate === todayKey || readDoneDate() === todayKey;
 
   const scheduled: Array<{
     id: number;
     title: string;
     body: string;
     schedule: { at: Date; allowWhileIdle: boolean };
+    smallIcon: string;
+    iconColor: string;
   }> = [];
 
   for (let offset = 0; offset < DAYS_AHEAD; offset++) {
@@ -119,6 +140,8 @@ export async function syncDailyReminders(options: {
         title: copy.title,
         body: copy.body,
         schedule: { at, allowWhileIdle: true },
+        smallIcon: "ic_stat_notify",
+        iconColor: "#F4A93C",
       });
     }
   }
@@ -127,4 +150,17 @@ export async function syncDailyReminders(options: {
     await LocalNotifications.schedule({ notifications: scheduled });
   }
   return "ready";
+}
+
+/**
+ * Re-arms the reminders without needing the Profile page: call on app start and on resume.
+ * Does nothing unless the user turned reminders on. Keeps the 14-day window topped up.
+ */
+export async function refreshRemindersIfEnabled(): Promise<void> {
+  if (!isNativeApp() || !readReminderPref()) return;
+  try {
+    await syncDailyReminders({ enabled: true });
+  } catch {
+    // best effort
+  }
 }
