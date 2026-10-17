@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { hideNativeSplash } from "@/lib/native-splash";
+import { markHydrated } from "@/lib/hydrated";
 
 import appCss from "../styles.css?url";
 // Hashed URLs of the latin font files, preloaded so they download in parallel with the CSS.
@@ -122,20 +123,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       // Fonts are self-hosted (see styles.css). Fonts must be fetched with CORS
       // (crossOrigin) even same-origin, or the preload is not reused.
-      { rel: "preload", as: "font", type: "font/woff2", href: frauncesLatinUrl, crossOrigin: "anonymous" },
-      { rel: "preload", as: "font", type: "font/woff2", href: manropeLatinUrl, crossOrigin: "anonymous" },
+      {
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: frauncesLatinUrl,
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: manropeLatinUrl,
+        crossOrigin: "anonymous",
+      },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
 
 /**
  * Outermost HTML document shell used during SSR (and hydration). Wraps the
@@ -147,7 +158,10 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         {/* Public runtime config for the browser (must run before app scripts). */}
-        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: publicConfigScript() }} />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: publicConfigScript() }}
+        />
         <HeadContent />
       </head>
       <body>
@@ -174,6 +188,7 @@ function RootComponent() {
   // In the native app, remove the launch splash as soon as the web app is up.
   useEffect(() => {
     void hideNativeSplash();
+    markHydrated(); // later page mounts (tab switches) may render cached data immediately
   }, []);
 
   useEffect(() => {
@@ -200,4 +215,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

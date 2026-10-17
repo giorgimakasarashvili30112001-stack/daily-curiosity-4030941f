@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
@@ -11,19 +11,22 @@ import { getTodayView } from "@/lib/today-view";
 import { getTodayFact } from "@/lib/facts.functions";
 import { getProfile, isFactSaved } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
-import { FACT_GC_TIME, msUntilUtcMidnight } from "@/lib/cache-time";
+import { FACT_GC_TIME } from "@/lib/cache-time";
+import { isHydrated } from "@/lib/hydrated";
 
 /**
- * Query definition for today's featured fact. Cached until the next UTC
- * midnight (when a new fact is published), matching the daily content cadence.
+ * Query definition for today's featured fact. Once loaded it is kept for the whole UTC day:
+ * it never goes stale by itself, so switching tabs or reopening the app reads it from the
+ * cache with no request. When the UTC date changes, TodayPage refetches it explicitly.
  */
 const todayQuery = queryOptions({
   queryKey: ["today-fact"],
   queryFn: () => getTodayFact(),
-  staleTime: msUntilUtcMidnight(),
+  staleTime: Infinity,
   gcTime: FACT_GC_TIME,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
 });
-
 
 /**
  * Route: `/` — the app's home page / "Today" screen.
@@ -61,14 +64,37 @@ export const Route = createFileRoute("/")({
 
 /** Home page component: renders today's fact, quiz, sign-in CTA, and archive link. */
 function TodayPage() {
+  const queryClient = useQueryClient();
   const { data, isError, isFetching, fetchStatus, refetch } = useQuery(todayQuery);
 
   // The server HTML always contains the loading screen (it has no data), so the
   // first client render must too, otherwise React reports a hydration mismatch
   // when a cached fact is available. Flip right after mount: cached data then
   // appears on the next frame, with no network wait.
-  const [mounted, setMounted] = useState(false);
+  // After the first render of the app, later mounts (tab switches) skip this and show the
+  // cached fact immediately.
+  const [mounted, setMounted] = useState(isHydrated());
   useEffect(() => setMounted(true), []);
+
+  // A new UTC day started since the cached fact was loaded (e.g. the app stayed open past
+  // midnight or was resumed the next day): fetch the new one.
+  useEffect(() => {
+    const checkNewDay = () => {
+      const cached = queryClient.getQueryData<{ date?: string }>(todayQuery.queryKey);
+      const today = new Date().toISOString().slice(0, 10);
+      if (cached?.date && cached.date !== today) void refetch();
+    };
+    checkNewDay();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkNewDay();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = setInterval(checkNewDay, 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(timer);
+    };
+  }, [queryClient, refetch]);
 
   const view = getTodayView({
     mounted,
