@@ -6,7 +6,6 @@ import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
 import { FactCard } from "@/components/FactCard";
 import { DailyQuizCard } from "@/components/DailyQuizCard";
-import { TodayLoading } from "@/components/TodayLoading";
 import { getTodayView } from "@/lib/today-view";
 import { getTodayFact } from "@/lib/facts.functions";
 import { getProfile, isFactSaved } from "@/lib/user.functions";
@@ -34,7 +33,7 @@ const todayQuery = queryOptions({
  * Data: today's fact is fetched by the component (`useQuery(todayQuery)`),
  * NOT by a blocking route loader: a loader makes the server wait for the
  * database before sending any HTML, which leaves the phone on a blank screen.
- * Instead the page shell and a loading screen render immediately, and the fact
+ * Instead the page shell renders immediately (no loading screen), and the fact
  * fills in as soon as it is available (instantly when cached for today).
  * Also fetches the signed-in user's profile (for streak) and whether the fact
  * is already saved, both only when a user is logged in. Public route — viewable
@@ -67,7 +66,7 @@ function TodayPage() {
   const queryClient = useQueryClient();
   const { data, isError, isFetching, fetchStatus, refetch } = useQuery(todayQuery);
 
-  // The server HTML always contains the loading screen (it has no data), so the
+  // The server HTML never contains the fact (it has no data), so the
   // first client render must too, otherwise React reports a hydration mismatch
   // when a cached fact is available. Flip right after mount: cached data then
   // appears on the next frame, with no network wait.
@@ -157,9 +156,7 @@ function TodayPage() {
             {isFetching ? "Trying…" : "Try again"}
           </button>
         </div>
-      ) : view === "loading" ? (
-        <TodayLoading />
-      ) : view === "fact" && data?.fact ? (
+      ) : view === "loading" ? null : view === "fact" && data?.fact ? (
         <FactCard
           key={data.fact.id}
           fact={data.fact}
