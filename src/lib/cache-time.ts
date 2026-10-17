@@ -21,5 +21,9 @@ export function msUntilUtcMidnight(): number {
   return Math.max(1000, next - now.getTime());
 }
 
-/** Keep offline content around for a month. */
-export const FACT_GC_TIME = 1000 * 60 * 60 * 24 * 30;
+/**
+ * How long unused cached content stays in memory: a week.
+ * IMPORTANT: must stay below 2^31-1 ms (~24.8 days). Browsers run timers longer than that
+ * immediately, which made the cache delete every entry the moment you left a page.
+ */
+export const FACT_GC_TIME = 1000 * 60 * 60 * 24 * 7;
