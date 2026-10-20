@@ -221,6 +221,9 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
   );
 }
 
+/** Set to true to show the "More coins" (watch an ad) button on the Profile page again. */
+const SHOW_MORE_COINS = false;
+
 /**
  * Coins card with a "More coins" button that plays a rewarded video in the Android app. The +3 coins are credited by the server once
  * Google confirms the ad was watched, so we wait for the balance to change.
@@ -279,7 +282,7 @@ function CoinsCard({ coins }: { coins: number }) {
         {coins}
       </p>
       <p className="mt-1 text-sm text-muted-foreground">1 coin per correct answer</p>
-      {native ? (
+      {!SHOW_MORE_COINS ? null : native ? (
         <button
           type="button"
           disabled={busy}
