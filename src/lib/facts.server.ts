@@ -248,15 +248,16 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
       required: ["facts"],
     },
   });
-  if (!content) return 0;
+  if (!content) throw new Error("the AI returned no text (empty or blocked response)");
 
   let parsed: { facts?: GeneratedFact[] };
   try {
     parsed = JSON.parse(content) as { facts?: GeneratedFact[] };
   } catch {
-    return 0;
+    throw new Error(`the AI answer was not valid JSON: ${content.slice(0, 160)}`);
   }
 
+  const returned = parsed.facts?.length ?? 0;
   const rows = (parsed.facts ?? [])
     .filter(
       (f) =>
@@ -293,7 +294,13 @@ export async function topUpFacts(minUnused = 15, batchSize = 8): Promise<number>
     return true;
   });
 
-  if (fresh.length === 0) return 0;
+  if (fresh.length === 0) {
+    throw new Error(
+      returned === 0
+        ? "the AI returned no explainers"
+        : `the AI returned ${returned} explainers but none were usable (${rows.length} valid, ${rows.length - fresh.length} duplicate titles)`,
+    );
+  }
 
   let { error } = await supabaseAdmin.from("facts").upsert(fresh, { onConflict: "slug" });
   if (error && (error.code === "23502" || /question_type/i.test(error.message))) {
