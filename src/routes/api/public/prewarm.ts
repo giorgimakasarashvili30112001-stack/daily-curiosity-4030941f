@@ -16,15 +16,19 @@ async function isAuthorized(provided: string): Promise<boolean> {
   const secret = process.env["PREWARM_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "";
   if (secret && provided === secret) return true;
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
+    // verify_cron_token may only be executed by the service role (see the scheduler SQL),
+    // so it must be called with the admin client, not the public (anon) one.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Loosely typed: `verify_cron_token` is not in the generated types.
-    const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
+    const db = supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
     const { data, error } = await db.rpc("verify_cron_token", {
       p_name: "prewarm",
       p_token: provided,
     });
+    if (error) console.error("prewarm: verify_cron_token failed:", error.message);
     return !error && data === true;
-  } catch {
+  } catch (e) {
+    console.error("prewarm: could not verify cron token:", (e as Error).message);
     return false;
   }
 }
