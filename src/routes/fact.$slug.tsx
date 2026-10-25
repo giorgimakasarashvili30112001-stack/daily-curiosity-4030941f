@@ -109,6 +109,7 @@ function FactPage() {
         dateLabel={dateLabel}
         isSignedIn={!!user}
         initiallySaved={saved.data?.saved ?? false}
+        showPermalink={false}
       />
     </AppShell>
   );

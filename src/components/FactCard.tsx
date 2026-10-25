@@ -21,6 +21,8 @@ interface FactCardProps {
   dateLabel?: string | undefined;
   isSignedIn: boolean;
   initiallySaved?: boolean;
+  /** Show the "Open permanent link" button. Hidden on the fact's own page. Default true. */
+  showPermalink?: boolean;
 }
 
 /**
@@ -57,6 +59,7 @@ export const FactCard = memo(function FactCard({
   dateLabel,
   isSignedIn,
   initiallySaved = false,
+  showPermalink = true,
 }: FactCardProps) {
   // Optimistic local "saved" flag; re-synced from props once the caller's
   // saved-state query resolves (see effect below).
@@ -177,13 +180,15 @@ export const FactCard = memo(function FactCard({
 
         </div>
 
-        <Link
-          to="/fact/$slug"
-          params={{ slug: fact.slug }}
-          className="mt-4 block text-center text-xs uppercase tracking-[0.16em] text-muted-foreground underline-offset-4 hover:underline"
-        >
-          Open permanent link
-        </Link>
+        {showPermalink ? (
+          <Link
+            to="/fact/$slug"
+            params={{ slug: fact.slug }}
+            className="mt-4 block text-center text-xs uppercase tracking-[0.16em] text-muted-foreground underline-offset-4 hover:underline"
+          >
+            Open permanent link
+          </Link>
+        ) : null}
       </div>
     </article>
   );
