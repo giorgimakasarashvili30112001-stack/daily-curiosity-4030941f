@@ -174,9 +174,13 @@ function ProfilePage() {
 function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null }) {
   const { enabled, status, toggle } = useDailyReminders(lastCorrectDate);
   const [busy, setBusy] = useState(false);
+  // Show the new position immediately; it slides back if the change is refused.
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
 
   const onToggle = async () => {
+    if (busy) return;
     setBusy(true);
+    setOptimistic(!enabled);
     try {
       const result = await toggle(!enabled);
       if (result === "denied") toast.error("Notifications are blocked in your system settings");
@@ -184,6 +188,7 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
         toast.info("Reminders work in the installed app, not the browser");
       else toast.success(!enabled ? "Reminders on" : "Reminders off");
     } finally {
+      setOptimistic(null);
       setBusy(false);
     }
   };
@@ -201,8 +206,8 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
           </p>
         </div>
         <Switch
-          checked={enabled}
-          disabled={busy || status === "unsupported"}
+          checked={optimistic ?? enabled}
+          disabled={status === "unsupported"}
           onCheckedChange={() => void onToggle()}
           aria-label="Daily reminders"
         />
