@@ -187,6 +187,8 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
       else if (result === "unsupported")
         toast.info("Reminders work in the installed app, not the browser");
       else toast.success(!enabled ? "Reminders on" : "Reminders off");
+    } catch (error) {
+      toast.error(`Could not change reminders: ${(error as Error)?.message ?? "unknown error"}`);
     } finally {
       setOptimistic(null);
       setBusy(false);

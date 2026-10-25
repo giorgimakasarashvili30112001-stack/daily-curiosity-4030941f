@@ -123,6 +123,7 @@ export async function syncDailyReminders(options: {
     schedule: { at: Date; allowWhileIdle: boolean };
     smallIcon: string;
     iconColor: string;
+    isExactNotification: boolean;
   }> = [];
 
   for (let offset = 0; offset < DAYS_AHEAD; offset++) {
@@ -140,6 +141,9 @@ export async function syncDailyReminders(options: {
         title: copy.title,
         body: copy.body,
         schedule: { at, allowWhileIdle: true },
+        // Inexact: this plugin defaults to exact alarms, which on Android 12+ opens a system
+        // "Alarms & reminders" screen. A reminder a few minutes late is fine.
+        isExactNotification: false,
         smallIcon: "ic_stat_notify",
         iconColor: "#F4A93C",
       });
