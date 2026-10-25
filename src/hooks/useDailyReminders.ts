@@ -20,8 +20,12 @@ import {
  * re-running on mount, on app resume and whenever today's progress changes.
  */
 export function useDailyReminders(lastCorrectDate?: string | null) {
-  const [enabled, setEnabled] = useState(false);
-  const [status, setStatus] = useState<ReminderStatus>("ready");
+  // Read the saved choice synchronously so the switch never flashes "off" when the page
+  // is opened again. (The pages using this hook are client-only, so this is safe.)
+  const [enabled, setEnabled] = useState(() => readReminderPref());
+  const [status, setStatus] = useState<ReminderStatus>(() =>
+    isNativeApp() ? "ready" : "unsupported",
+  );
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
