@@ -70,7 +70,13 @@ const BODIES: Record<number, { title: string; body: string }> = {
 export async function ensurePermission(): Promise<ReminderStatus> {
   if (!isNativeApp()) return "unsupported";
   const LocalNotifications = await plugin();
-  let { display } = await LocalNotifications.checkPermissions();
+  let { display } = await withTimeout(LocalNotifications.checkPermissions(), 8000).catch(
+    (error: Error) => {
+      throw new Error(
+        `the phone did not answer the notification permission check (${error.message})`,
+      );
+    },
+  );
   if (display === "prompt" || display === "prompt-with-rationale") {
     ({ display } = await LocalNotifications.requestPermissions());
   }
@@ -175,20 +181,52 @@ export function rememberReminderError(error: unknown): void {
   lastError = (error as Error)?.message ?? String(error);
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`no answer after ${ms / 1000}s`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 /** One-line description of what the app sees on this device, for troubleshooting. */
 export async function getReminderDiagnostics(): Promise<string> {
   const parts: string[] = [];
   parts.push(isNativeApp() ? "installed app" : "browser (reminders unsupported)");
   parts.push(`saved choice: ${readReminderPref() ? "on" : "off"}`);
   if (isNativeApp()) {
+    parts.push(`platform: ${Capacitor.getPlatform()}`);
+    parts.push(
+      `plugin registered: ${Capacitor.isPluginAvailable("LocalNotifications") ? "yes" : "NO"}`,
+    );
+    parts.push(`site: ${typeof location !== "undefined" ? location.origin : "?"}`);
+    let LocalNotifications: Awaited<ReturnType<typeof plugin>> | null = null;
     try {
-      const LocalNotifications = await plugin();
-      const { display } = await LocalNotifications.checkPermissions();
-      parts.push(`permission: ${display}`);
-      const { notifications } = await LocalNotifications.getPending();
-      parts.push(`scheduled: ${notifications.length}`);
+      LocalNotifications = await withTimeout(plugin(), 4000);
     } catch (error) {
-      parts.push(`plugin error: ${(error as Error)?.message ?? String(error)}`);
+      parts.push(`load plugin: ${(error as Error)?.message ?? String(error)}`);
+    }
+    if (LocalNotifications) {
+      try {
+        const { display } = await withTimeout(LocalNotifications.checkPermissions(), 4000);
+        parts.push(`permission: ${display}`);
+      } catch (error) {
+        parts.push(`permission check: ${(error as Error)?.message ?? String(error)}`);
+      }
+      try {
+        const { notifications } = await withTimeout(LocalNotifications.getPending(), 4000);
+        parts.push(`scheduled: ${notifications.length}`);
+      } catch (error) {
+        parts.push(`pending check: ${(error as Error)?.message ?? String(error)}`);
+      }
     }
   }
   if (lastError) parts.push(`last error: ${lastError}`);
