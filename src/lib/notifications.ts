@@ -168,3 +168,29 @@ export async function refreshRemindersIfEnabled(): Promise<void> {
     // best effort
   }
 }
+
+/** The last error seen while changing reminders (kept in memory for the status check). */
+let lastError: string | null = null;
+export function rememberReminderError(error: unknown): void {
+  lastError = (error as Error)?.message ?? String(error);
+}
+
+/** One-line description of what the app sees on this device, for troubleshooting. */
+export async function getReminderDiagnostics(): Promise<string> {
+  const parts: string[] = [];
+  parts.push(isNativeApp() ? "installed app" : "browser (reminders unsupported)");
+  parts.push(`saved choice: ${readReminderPref() ? "on" : "off"}`);
+  if (isNativeApp()) {
+    try {
+      const LocalNotifications = await plugin();
+      const { display } = await LocalNotifications.checkPermissions();
+      parts.push(`permission: ${display}`);
+      const { notifications } = await LocalNotifications.getPending();
+      parts.push(`scheduled: ${notifications.length}`);
+    } catch (error) {
+      parts.push(`plugin error: ${(error as Error)?.message ?? String(error)}`);
+    }
+  }
+  if (lastError) parts.push(`last error: ${lastError}`);
+  return parts.join(" · ");
+}

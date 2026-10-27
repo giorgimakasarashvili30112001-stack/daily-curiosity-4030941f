@@ -16,6 +16,7 @@ import { getProfile, updateDisplayName } from "@/lib/user.functions";
 import { getQuizStats } from "@/lib/quiz.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdConfig } from "@/lib/ads.functions";
+import { getReminderDiagnostics, rememberReminderError } from "@/lib/notifications";
 import { adsSupported, playRewardedAd, REWARD_COINS } from "@/lib/rewarded-ad";
 
 /**
@@ -176,6 +177,7 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
   const [busy, setBusy] = useState(false);
   // Show the new position immediately; it slides back if the change is refused.
   const [optimistic, setOptimistic] = useState<boolean | null>(null);
+  const [diag, setDiag] = useState<string | null>(null);
 
   const onToggle = async () => {
     if (busy) return;
@@ -188,6 +190,7 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
         toast.info("Reminders work in the installed app, not the browser");
       else toast.success(!enabled ? "Reminders on" : "Reminders off");
     } catch (error) {
+      rememberReminderError(error);
       toast.error(`Could not change reminders: ${(error as Error)?.message ?? "unknown error"}`);
     } finally {
       setOptimistic(null);
@@ -219,6 +222,17 @@ function ReminderSettings({ lastCorrectDate }: { lastCorrectDate: string | null 
           Available in the installed app on your phone.
         </p>
       )}
+      <button
+        type="button"
+        onClick={() => {
+          setDiag("Checking…");
+          void getReminderDiagnostics().then(setDiag);
+        }}
+        className="mt-3 text-xs text-muted-foreground underline underline-offset-2"
+      >
+        Check reminder status
+      </button>
+      {diag ? <p className="mt-2 break-words text-xs text-muted-foreground">{diag}</p> : null}
       {status === "denied" && (
         <p className="mt-3 text-xs text-destructive">
           Notifications are blocked — enable them for Daily How in your system settings.
