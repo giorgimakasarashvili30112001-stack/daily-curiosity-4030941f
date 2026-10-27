@@ -44,9 +44,15 @@ export function writeReminderPref(enabled: boolean): void {
   localStorage.setItem(REMINDER_PREF_KEY, enabled ? "true" : "false");
 }
 
+/**
+ * Loads the notification plugin. It is returned inside a plain object on purpose: a Capacitor
+ * plugin object answers ANY property, including `then`, by calling a native method. If it were
+ * returned or awaited directly, JavaScript would treat it as a promise and wait forever
+ * (the toggle and permission prompt then never respond).
+ */
 async function plugin() {
   const { LocalNotifications } = await import("@capacitor/local-notifications");
-  return LocalNotifications;
+  return { LocalNotifications };
 }
 
 /** Stable id per day-slot so re-scheduling replaces instead of duplicating. */
@@ -69,7 +75,7 @@ const BODIES: Record<number, { title: string; body: string }> = {
 
 export async function ensurePermission(): Promise<ReminderStatus> {
   if (!isNativeApp()) return "unsupported";
-  const LocalNotifications = await plugin();
+  const { LocalNotifications } = await plugin();
   let { display } = await withTimeout(LocalNotifications.checkPermissions(), 8000).catch(
     (error: Error) => {
       throw new Error(
@@ -85,7 +91,7 @@ export async function ensurePermission(): Promise<ReminderStatus> {
 
 export async function cancelDailyReminders(): Promise<void> {
   if (!isNativeApp()) return;
-  const LocalNotifications = await plugin();
+  const { LocalNotifications } = await plugin();
   const { notifications } = await LocalNotifications.getPending();
   if (notifications.length) {
     await LocalNotifications.cancel({ notifications: notifications.map((n) => ({ id: n.id })) });
@@ -114,7 +120,7 @@ export async function syncDailyReminders(options: {
     return status;
   }
 
-  const LocalNotifications = await plugin();
+  const { LocalNotifications } = await plugin();
   await cancelDailyReminders();
 
   const now = new Date();
@@ -208,9 +214,9 @@ export async function getReminderDiagnostics(): Promise<string> {
       `plugin registered: ${Capacitor.isPluginAvailable("LocalNotifications") ? "yes" : "NO"}`,
     );
     parts.push(`site: ${typeof location !== "undefined" ? location.origin : "?"}`);
-    let LocalNotifications: Awaited<ReturnType<typeof plugin>> | null = null;
+    let LocalNotifications: Awaited<ReturnType<typeof plugin>>["LocalNotifications"] | null = null;
     try {
-      LocalNotifications = await withTimeout(plugin(), 4000);
+      LocalNotifications = (await withTimeout(plugin(), 4000)).LocalNotifications;
     } catch (error) {
       parts.push(`load plugin: ${(error as Error)?.message ?? String(error)}`);
     }
