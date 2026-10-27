@@ -37,6 +37,5 @@ dist-ssr
 !.env.example
 
 # Generated from .env by `npm run config:sync`
-native/android/AppConfig.kt
 native/ios/AppConfig.swift
 db/generated/

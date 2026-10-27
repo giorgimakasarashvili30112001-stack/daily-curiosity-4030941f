@@ -4,4 +4,8 @@
     <string name="title_activity_main">Daily How</string>
     <string name="package_name">com.dailyhow.app</string>
     <string name="custom_url_scheme">com.dailyhow.app</string>
+    <string name="widget_label">TODAY\'S EXPLAINER</string>
+    <string name="widget_loading">Loading today\'s explainer…</string>
+    <string name="widget_fallback">Open Daily How to read today\'s explainer</string>
+    <string name="widget_description">Today\'s Daily How explainer on your home screen.</string>
 </resources>

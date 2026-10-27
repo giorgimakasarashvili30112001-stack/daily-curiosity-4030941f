@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Site the widget reads from. Overwritten by `npm run config:sync` from APP_URL in .env. -->
+    <string name="app_origin" translatable="false">https://daily-curiosity-4030941f.giorgimakasarashvili30112001.workers.dev</string>
+</resources>

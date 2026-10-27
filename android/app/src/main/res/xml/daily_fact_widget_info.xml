@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- android/app/src/main/res/xml/daily_fact_widget_info.xml -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/daily_fact_widget"
+    android:description="@string/widget_description"
     android:minWidth="180dp"
-    android:minHeight="80dp"
+    android:minHeight="90dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="86400000"
+    android:updatePeriodMillis="10800000"
     android:widgetCategory="home_screen" />

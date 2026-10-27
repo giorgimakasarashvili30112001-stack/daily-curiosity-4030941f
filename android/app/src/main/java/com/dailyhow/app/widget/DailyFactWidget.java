@@ -1,0 +1,125 @@
+package com.dailyhow.app.widget;
+
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProvider;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.widget.RemoteViews;
+
+import com.dailyhow.app.R;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
+/**
+ * Home-screen widget showing today's explainer title. Tapping it opens the app.
+ * Data: GET {app_origin}/api/public/today-title (app_origin comes from APP_URL in .env,
+ * written to res/values/app_config.xml by `npm run config:sync`).
+ */
+public class DailyFactWidget extends AppWidgetProvider {
+
+    private static final String PREFS = "daily_how_widget";
+    private static final String KEY_TITLE = "title";
+    private static final String KEY_DATE = "date";
+
+    @Override
+    public void onUpdate(final Context context, final AppWidgetManager manager, final int[] ids) {
+        final String origin = context.getString(R.string.app_origin);
+        final SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        final String today = todayUtc();
+
+        // Show something immediately: today's cached title, otherwise a placeholder.
+        String cachedTitle = prefs.getString(KEY_TITLE, null);
+        String cachedDate = prefs.getString(KEY_DATE, null);
+        String immediate = (cachedTitle != null && today.equals(cachedDate))
+                ? cachedTitle
+                : context.getString(R.string.widget_loading);
+        renderAll(context, manager, ids, immediate);
+
+        // Fetch the latest title off the main thread; goAsync keeps the process alive meanwhile.
+        final PendingResult pending = goAsync();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String[] fresh = fetchTitle(origin);
+                    String text;
+                    if (fresh != null) {
+                        prefs.edit().putString(KEY_TITLE, fresh[0]).putString(KEY_DATE, fresh[1]).apply();
+                        text = fresh[0];
+                    } else {
+                        String title = prefs.getString(KEY_TITLE, null);
+                        text = (title != null && today.equals(prefs.getString(KEY_DATE, null)))
+                                ? title
+                                : context.getString(R.string.widget_fallback);
+                    }
+                    renderAll(context, manager, ids, text);
+                } catch (Exception ignored) {
+                    // keep whatever is currently shown
+                } finally {
+                    pending.finish();
+                }
+            }
+        }).start();
+    }
+
+    private static void renderAll(Context context, AppWidgetManager manager, int[] ids, String title) {
+        for (int id : ids) {
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.daily_fact_widget);
+            views.setTextViewText(R.id.widget_title, title);
+
+            // Tap = open the Daily How app.
+            Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+            if (launch != null) {
+                PendingIntent open = PendingIntent.getActivity(
+                        context, 0, launch, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                views.setOnClickPendingIntent(R.id.widget_root, open);
+            }
+            manager.updateAppWidget(id, views);
+        }
+    }
+
+    /** Returns {title, date} or null when unavailable (offline, not published yet, error). */
+    private static String[] fetchTitle(String origin) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(origin + "/api/public/today-title").openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(4000);
+            connection.setReadTimeout(4000);
+            if (connection.getResponseCode() != 200) return null;
+            StringBuilder body = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            try {
+                String line;
+                while ((line = reader.readLine()) != null) body.append(line);
+            } finally {
+                reader.close();
+            }
+            JSONObject json = new JSONObject(body.toString());
+            if (json.isNull("title")) return null;
+            String date = json.optString("date", todayUtc());
+            return new String[] { json.getString("title"), date };
+        } catch (Exception error) {
+            return null;
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private static String todayUtc() {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format.format(new Date());
+    }
+}

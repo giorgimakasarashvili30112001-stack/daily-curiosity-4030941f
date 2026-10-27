@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- android/app/src/main/res/layout/daily_fact_widget.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center_vertical"
     android:padding="16dp"
     android:background="@drawable/widget_background">
 
@@ -12,10 +12,11 @@
         android:id="@+id/widget_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TODAY'S FACT"
+        android:text="@string/widget_label"
         android:textSize="10sp"
-        android:letterSpacing="0.12"
-        android:textColor="#8A8FA3" />
+        android:letterSpacing="0.14"
+        android:textStyle="bold"
+        android:textColor="#F4A93C" />
 
     <TextView
         android:id="@+id/widget_title"
@@ -26,6 +27,6 @@
         android:ellipsize="end"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="#12141C"
-        android:text="Loading…" />
+        android:textColor="#F5F1E8"
+        android:text="@string/widget_loading" />
 </LinearLayout>
