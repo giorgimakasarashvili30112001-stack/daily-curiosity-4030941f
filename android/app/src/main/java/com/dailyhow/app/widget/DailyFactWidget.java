@@ -1,5 +1,6 @@
 package com.dailyhow.app.widget;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -18,6 +19,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -34,6 +36,41 @@ public class DailyFactWidget extends AppWidgetProvider {
     static final String KEY_DATE = "date";
     static final String KEY_STREAK = "streak";
     static final String KEY_STREAK_DATE = "streak_date";
+
+    private static final String ACTION_DAILY = "com.dailyhow.app.widget.DAILY_REFRESH";
+
+    /** Schedule the next refresh for 00:05 UTC (when the new explainer goes live). Inexact: no permission needed. */
+    private static void scheduleDaily(Context context) {
+        AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarms == null) return;
+        Calendar next = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        next.set(Calendar.HOUR_OF_DAY, 0);
+        next.set(Calendar.MINUTE, 5);
+        next.set(Calendar.SECOND, 0);
+        next.set(Calendar.MILLISECOND, 0);
+        if (next.getTimeInMillis() <= System.currentTimeMillis()) next.add(Calendar.DAY_OF_MONTH, 1);
+        Intent intent = new Intent(context, DailyFactWidget.class).setAction(ACTION_DAILY);
+        PendingIntent pi = PendingIntent.getBroadcast(
+                context, 1, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.getTimeInMillis(), pi);
+    }
+
+    @Override
+    public void onEnabled(Context context) {
+        scheduleDaily(context);
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (ACTION_DAILY.equals(intent.getAction())) {
+            scheduleDaily(context);
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            int[] ids = manager.getAppWidgetIds(new ComponentName(context, DailyFactWidget.class));
+            if (ids != null && ids.length > 0) onUpdate(context, manager, ids);
+            return;
+        }
+        super.onReceive(context, intent);
+    }
 
     /** Re-render all widgets from cached data (no network). */
     public static void renderFromCache(Context context) {
@@ -65,6 +102,7 @@ public class DailyFactWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(final Context context, final AppWidgetManager manager, final int[] ids) {
+        scheduleDaily(context); // self-heals after reboot / app update
         final String origin = context.getString(R.string.app_origin);
         final SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         final String today = todayUtc();
