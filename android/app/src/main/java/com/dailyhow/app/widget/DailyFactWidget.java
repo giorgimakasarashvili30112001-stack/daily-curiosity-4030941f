@@ -3,6 +3,7 @@ package com.dailyhow.app.widget;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,9 +29,39 @@ import java.util.TimeZone;
  */
 public class DailyFactWidget extends AppWidgetProvider {
 
-    private static final String PREFS = "daily_how_widget";
-    private static final String KEY_TITLE = "title";
-    private static final String KEY_DATE = "date";
+    static final String PREFS = "daily_how_widget";
+    static final String KEY_TITLE = "title";
+    static final String KEY_DATE = "date";
+    static final String KEY_STREAK = "streak";
+    static final String KEY_STREAK_DATE = "streak_date";
+
+    /** Re-render all widgets from cached data (no network). */
+    public static void renderFromCache(Context context) {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        int[] ids = manager.getAppWidgetIds(new ComponentName(context, DailyFactWidget.class));
+        if (ids == null || ids.length == 0) return;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String title = prefs.getString(KEY_TITLE, null);
+        String text = (title != null && todayUtc().equals(prefs.getString(KEY_DATE, null)))
+                ? title
+                : context.getString(R.string.widget_loading);
+        renderAll(context, manager, ids, text);
+    }
+
+    /** Streak text like "🔥 5", or null when unknown/stale (last synced before yesterday). */
+    private static String streakText(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        int streak = prefs.getInt(KEY_STREAK, 0);
+        String date = prefs.getString(KEY_STREAK_DATE, null);
+        if (streak <= 0 || date == null) return null;
+        long now = System.currentTimeMillis();
+        String today = todayUtc();
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        f.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String yesterday = f.format(new Date(now - 24L * 60 * 60 * 1000));
+        if (!date.equals(today) && !date.equals(yesterday)) return null;
+        return "\uD83D\uDD25 " + streak;
+    }
 
     @Override
     public void onUpdate(final Context context, final AppWidgetManager manager, final int[] ids) {
@@ -77,6 +108,13 @@ public class DailyFactWidget extends AppWidgetProvider {
         for (int id : ids) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.daily_fact_widget);
             views.setTextViewText(R.id.widget_title, title);
+            String streak = streakText(context);
+            if (streak != null) {
+                views.setTextViewText(R.id.widget_streak, streak);
+                views.setViewVisibility(R.id.widget_streak, android.view.View.VISIBLE);
+            } else {
+                views.setViewVisibility(R.id.widget_streak, android.view.View.GONE);
+            }
 
             // Tap = open the Daily How app.
             Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());

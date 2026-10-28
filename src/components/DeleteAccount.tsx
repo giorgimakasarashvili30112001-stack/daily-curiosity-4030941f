@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { syncWidgetStreak } from "@/lib/widget-bridge";
 import { deleteAccount } from "@/lib/user.functions";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ export function DeleteAccountButton() {
       } catch {
         // storage unavailable: nothing to clear
       }
+      await syncWidgetStreak(null);
       await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       toast.success("Your account and data were deleted");
       window.location.assign("/");

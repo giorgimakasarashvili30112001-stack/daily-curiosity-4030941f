@@ -15,6 +15,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { getProfile, updateDisplayName } from "@/lib/user.functions";
 import { getQuizStats } from "@/lib/quiz.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { syncWidgetStreak } from "@/lib/widget-bridge";
 import { getAdConfig } from "@/lib/ads.functions";
 import { adsSupported, playRewardedAd, REWARD_COINS } from "@/lib/rewarded-ad";
 
@@ -72,6 +73,7 @@ function ProfilePage() {
   const onSignOut = async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
+    void syncWidgetStreak(null);
     await supabase.auth.signOut();
     void navigate({ to: "/auth", replace: true });
   };

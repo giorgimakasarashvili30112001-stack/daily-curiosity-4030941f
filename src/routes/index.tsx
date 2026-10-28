@@ -13,6 +13,7 @@ import { getProfile, isFactSaved } from "@/lib/user.functions";
 import { useSession } from "@/hooks/useSession";
 import { FACT_GC_TIME } from "@/lib/cache-time";
 import { isHydrated } from "@/lib/hydrated";
+import { syncWidgetStreak } from "@/lib/widget-bridge";
 
 /**
  * Query definition for today's featured fact. Once loaded it is kept for the whole UTC day:
@@ -114,6 +115,12 @@ function TodayPage() {
     queryFn: () => profileFn({}),
     enabled: !!user,
   });
+
+  const streakValue = streak.data?.streak;
+  useEffect(() => {
+    if (user && typeof streakValue === "number") void syncWidgetStreak(streakValue);
+    else if (!user && !sessionLoading) void syncWidgetStreak(null);
+  }, [user, sessionLoading, streakValue]);
 
   const saved = useQuery({
     queryKey: ["fact-saved", data?.fact?.id, user?.id],
