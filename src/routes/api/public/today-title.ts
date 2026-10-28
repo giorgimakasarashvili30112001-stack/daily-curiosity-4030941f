@@ -19,7 +19,7 @@ async function handle(): Promise<Response> {
     const db = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
     const { data, error } = await db
       .from("facts")
-      .select("title, category, slug, pick_date")
+      .select("title, hook, category, slug, pick_date")
       .eq("pick_date", date)
       .maybeSingle();
 
@@ -35,6 +35,7 @@ async function handle(): Promise<Response> {
     return new Response(
       JSON.stringify({
         title: data.title,
+        hook: data.hook ?? null,
         category: data.category ?? null,
         slug: data.slug ?? null,
         date: data.pick_date ?? date,

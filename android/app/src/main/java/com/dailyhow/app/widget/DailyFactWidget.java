@@ -34,6 +34,7 @@ public class DailyFactWidget extends AppWidgetProvider {
     static final String PREFS = "daily_how_widget";
     static final String KEY_TITLE = "title";
     static final String KEY_DATE = "date";
+    static final String KEY_HOOK = "hook";
     static final String KEY_STREAK = "streak";
     static final String KEY_STREAK_DATE = "streak_date";
 
@@ -82,7 +83,7 @@ public class DailyFactWidget extends AppWidgetProvider {
         String text = (title != null && todayUtc().equals(prefs.getString(KEY_DATE, null)))
                 ? title
                 : context.getString(R.string.widget_loading);
-        renderAll(context, manager, ids, text);
+        renderAll(context, manager, ids, text, prefs.getString(KEY_HOOK, null));
     }
 
     /** Streak text like "🔥 5", or null when unknown/stale (last synced before yesterday). */
@@ -113,7 +114,7 @@ public class DailyFactWidget extends AppWidgetProvider {
         String immediate = (cachedTitle != null && today.equals(cachedDate))
                 ? cachedTitle
                 : context.getString(R.string.widget_loading);
-        renderAll(context, manager, ids, immediate);
+        renderAll(context, manager, ids, immediate, (cachedTitle != null && today.equals(cachedDate)) ? prefs.getString(KEY_HOOK, null) : null);
 
         // Fetch the latest title off the main thread; goAsync keeps the process alive meanwhile.
         final PendingResult pending = goAsync();
@@ -123,16 +124,18 @@ public class DailyFactWidget extends AppWidgetProvider {
                 try {
                     String[] fresh = fetchTitle(origin);
                     String text;
+                    String hook = null;
                     if (fresh != null) {
-                        prefs.edit().putString(KEY_TITLE, fresh[0]).putString(KEY_DATE, fresh[1]).apply();
+                        hook = fresh[2];
+                        prefs.edit().putString(KEY_TITLE, fresh[0]).putString(KEY_DATE, fresh[1]).putString(KEY_HOOK, fresh[2]).apply();
                         text = fresh[0];
                     } else {
                         String title = prefs.getString(KEY_TITLE, null);
-                        text = (title != null && today.equals(prefs.getString(KEY_DATE, null)))
-                                ? title
-                                : context.getString(R.string.widget_fallback);
+                        boolean fresh2 = title != null && today.equals(prefs.getString(KEY_DATE, null));
+                        text = fresh2 ? title : context.getString(R.string.widget_fallback);
+                        if (fresh2) hook = prefs.getString(KEY_HOOK, null);
                     }
-                    renderAll(context, manager, ids, text);
+                    renderAll(context, manager, ids, text, hook);
                 } catch (Exception ignored) {
                     // keep whatever is currently shown
                 } finally {
@@ -142,10 +145,16 @@ public class DailyFactWidget extends AppWidgetProvider {
         }).start();
     }
 
-    private static void renderAll(Context context, AppWidgetManager manager, int[] ids, String title) {
+    private static void renderAll(Context context, AppWidgetManager manager, int[] ids, String title, String hook) {
         for (int id : ids) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.daily_fact_widget);
             views.setTextViewText(R.id.widget_title, title);
+            if (hook != null && hook.length() > 0) {
+                views.setTextViewText(R.id.widget_hook, hook);
+                views.setViewVisibility(R.id.widget_hook, android.view.View.VISIBLE);
+            } else {
+                views.setViewVisibility(R.id.widget_hook, android.view.View.GONE);
+            }
             String streak = streakText(context);
             if (streak != null) {
                 views.setTextViewText(R.id.widget_streak, streak);
@@ -185,7 +194,7 @@ public class DailyFactWidget extends AppWidgetProvider {
             JSONObject json = new JSONObject(body.toString());
             if (json.isNull("title")) return null;
             String date = json.optString("date", todayUtc());
-            return new String[] { json.getString("title"), date };
+            return new String[] { json.getString("title"), date, json.isNull("hook") ? "" : json.optString("hook", "") };
         } catch (Exception error) {
             return null;
         } finally {

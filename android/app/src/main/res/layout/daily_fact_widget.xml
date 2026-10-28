@@ -40,10 +40,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:maxLines="4"
+        android:maxLines="3"
         android:ellipsize="end"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="#F5F1E8"
         android:text="@string/widget_loading" />
+
+    <TextView
+        android:id="@+id/widget_hook"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="13sp"
+        android:textColor="#B8B2A4" />
 </LinearLayout>
