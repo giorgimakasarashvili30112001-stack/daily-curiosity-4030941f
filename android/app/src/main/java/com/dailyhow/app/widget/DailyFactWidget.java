@@ -80,10 +80,15 @@ public class DailyFactWidget extends AppWidgetProvider {
         if (ids == null || ids.length == 0) return;
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String title = prefs.getString(KEY_TITLE, null);
-        String text = (title != null && todayUtc().equals(prefs.getString(KEY_DATE, null)))
-                ? title
-                : context.getString(R.string.widget_loading);
-        renderAll(context, manager, ids, text, prefs.getString(KEY_HOOK, null));
+        if (title != null && todayUtc().equals(prefs.getString(KEY_DATE, null))) {
+            renderAll(context, manager, ids, title, prefs.getString(KEY_HOOK, null));
+        } else {
+            // Nothing fresh cached: run a full update (fetches the title) instead of showing "loading".
+            Intent update = new Intent(context, DailyFactWidget.class)
+                    .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+            context.sendBroadcast(update);
+        }
     }
 
     /** Streak text like "🔥 5", or null when unknown/stale (last synced before yesterday). */
@@ -111,10 +116,10 @@ public class DailyFactWidget extends AppWidgetProvider {
         // Show something immediately: today's cached title, otherwise a placeholder.
         String cachedTitle = prefs.getString(KEY_TITLE, null);
         String cachedDate = prefs.getString(KEY_DATE, null);
-        String immediate = (cachedTitle != null && today.equals(cachedDate))
+        String immediate = cachedTitle != null
                 ? cachedTitle
                 : context.getString(R.string.widget_loading);
-        renderAll(context, manager, ids, immediate, (cachedTitle != null && today.equals(cachedDate)) ? prefs.getString(KEY_HOOK, null) : null);
+        renderAll(context, manager, ids, immediate, cachedTitle != null ? prefs.getString(KEY_HOOK, null) : null);
 
         // Fetch the latest title off the main thread; goAsync keeps the process alive meanwhile.
         final PendingResult pending = goAsync();
@@ -131,9 +136,9 @@ public class DailyFactWidget extends AppWidgetProvider {
                         text = fresh[0];
                     } else {
                         String title = prefs.getString(KEY_TITLE, null);
-                        boolean fresh2 = title != null && today.equals(prefs.getString(KEY_DATE, null));
-                        text = fresh2 ? title : context.getString(R.string.widget_fallback);
-                        if (fresh2) hook = prefs.getString(KEY_HOOK, null);
+                        // Offline or not published yet: keep the last known explainer rather than a prompt.
+                        text = title != null ? title : context.getString(R.string.widget_fallback);
+                        if (title != null) hook = prefs.getString(KEY_HOOK, null);
                     }
                     renderAll(context, manager, ids, text, hook);
                 } catch (Exception ignored) {
@@ -180,8 +185,8 @@ public class DailyFactWidget extends AppWidgetProvider {
         try {
             connection = (HttpURLConnection) new URL(origin + "/api/public/today-title").openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(4000);
-            connection.setReadTimeout(4000);
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
             if (connection.getResponseCode() != 200) return null;
             StringBuilder body = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
