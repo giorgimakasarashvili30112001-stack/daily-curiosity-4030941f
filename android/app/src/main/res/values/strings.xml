@@ -7,6 +7,5 @@
     <string name="widget_label">TODAY\'S EXPLAINER</string>
     <string name="widget_loading">Loading today\'s explainer…</string>
     <string name="widget_fallback">Open Daily How to read today\'s explainer</string>
-    <string name="widget_cta">Tap to read →</string>
     <string name="widget_description">Today\'s Daily How explainer on your home screen.</string>
 </resources>
