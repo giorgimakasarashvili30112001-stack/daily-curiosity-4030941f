@@ -47,8 +47,7 @@ function PrivacyPage() {
         <ul className="mt-2 list-disc pl-5 text-sm leading-relaxed text-muted-foreground">
           <Li>
             <b>Account details</b> — your email address and a password (stored only as a hash by our
-            authentication provider), or, if you choose "Continue with Google", your Google account
-            email and name. We never see your Google password.
+            authentication provider).
           </Li>
           <Li>
             <b>Your activity</b> — your display name, streak, longest streak, last visit date,
@@ -104,7 +103,6 @@ function PrivacyPage() {
         <ul className="mt-2 list-disc pl-5 text-sm leading-relaxed text-muted-foreground">
           <Li>Supabase — authentication and database.</Li>
           <Li>Cloudflare — website hosting and delivery.</Li>
-          <Li>Google — optional Google sign-in. Google's own privacy policy applies to it.</Li>
           <Li>Google AdMob — shows ads, as described under "Advertising" above.</Li>
           <Li>
             Google Gemini API — used to write the explainers and quizzes. No personal data about you

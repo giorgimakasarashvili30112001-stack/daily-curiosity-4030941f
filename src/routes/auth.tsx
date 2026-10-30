@@ -8,8 +8,8 @@ import { AppHeader } from "@/components/AppHeader";
 
 /**
  * Route: `/auth` — sign in / sign up screen.
- * Shows an email+password form (toggle between sign-in and sign-up modes)
- * and a "Continue with Google" OAuth button. No loader data — all state is
+ * Shows an email+password form (toggle between sign-in and sign-up modes).
+ * No loader data — all state is
  * client-side. If a user is already signed in, redirects to `/` on mount.
  * Public route (must be reachable while signed out).
  */
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/auth")({
 
 /**
  * Auth page component. Talks directly to the Supabase browser client
- * (`supabase.auth.signUp` / `signInWithPassword` / `signInWithOAuth`) since
+ * (`supabase.auth.signUp` / `signInWithPassword`) since
  * auth itself doesn't go through server functions. Redirects to `/` once a
  * session exists.
  */
@@ -77,18 +77,6 @@ function AuthPage() {
     }
   };
 
-  const onGoogle = async () => {
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
-      setBusy(false);
-      toast.error("Google sign-in failed");
-    }
-  };
-
   return (
     <AppShell>
       <AppHeader eyebrow={mode === "signup" ? "Create account" : "Welcome back"} />
@@ -108,21 +96,6 @@ function AuthPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Your streak, saved explainers, and history follow you to every device.
           </p>
-
-          <button
-            type="button"
-            onClick={() => void onGoogle()}
-            disabled={busy}
-            className="mt-5 w-full rounded-full border border-border bg-secondary px-4 py-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-muted disabled:opacity-60"
-          >
-            Continue with Google
-          </button>
-
-          <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            or
-            <span className="h-px flex-1 bg-border" />
-          </div>
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
