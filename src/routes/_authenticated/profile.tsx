@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Bell, Coins, PlayCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +12,7 @@ import { ShareSheet } from "@/components/ShareSheet";
 import { DeleteAccountButton } from "@/components/DeleteAccount";
 import { AppShell } from "@/components/AppShell";
 import { AppHeader } from "@/components/AppHeader";
-import { getProfile, updateDisplayName } from "@/lib/user.functions";
+import { getProfile } from "@/lib/user.functions";
 import { getQuizStats } from "@/lib/quiz.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { syncWidgetStreak } from "@/lib/widget-bridge";
@@ -23,7 +23,7 @@ import { adsSupported, playRewardedAd, REWARD_COINS } from "@/lib/rewarded-ad";
  * Route: `/profile` — signed-in user's profile screen (requires auth via
  * the `_authenticated` parent route, which redirects to `/auth` otherwise).
  * Shows streak, longest streak, coins, quiz stats, a streak calendar,
- * daily reminder toggle, an editable display name, and sign out.
+ * daily reminder toggle, and sign out.
  * Data: fetches `getProfile` and `getQuizStats` server functions via
  * `useServerFn`/React Query (auth-bound; the Supabase bearer token is
  * attached automatically by the auth-attacher middleware).
@@ -34,41 +34,21 @@ export const Route = createFileRoute("/_authenticated/profile")({
       { title: "Your profile — Daily How" },
       { name: "description", content: "Track your reading streak and manage your account." },
       { property: "og:title", content: "Your profile — Daily How" },
-      { property: "og:description", content: "Your streak, your name, your account." },
+      { property: "og:description", content: "Your streak and your account." },
     ],
   }),
   component: ProfilePage,
 });
 
-/** Profile page component: streak/coin stats, name editing, sign-out, reminders. */
+/** Profile page component: streak/coin stats, sign-out, reminders. */
 function ProfilePage() {
   const fetchProfile = useServerFn(getProfile);
   const fetchQuizStats = useServerFn(getQuizStats);
-  const saveName = useServerFn(updateDisplayName);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
 
   const { data } = useQuery({ queryKey: ["profile"], queryFn: () => fetchProfile({}) });
   const quizStats = useQuery({ queryKey: ["quiz-stats"], queryFn: () => fetchQuizStats({}) });
-
-  useEffect(() => {
-    if (data?.displayName) setName(data.displayName);
-  }, [data?.displayName]);
-
-  const onSave = async () => {
-    setBusy(true);
-    try {
-      await saveName({ data: { displayName: name.trim() } });
-      void queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Name updated");
-    } catch {
-      toast.error("Could not save your name");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const onSignOut = async () => {
     await queryClient.cancelQueries();
@@ -131,27 +111,6 @@ function ProfilePage() {
       <StreakCalendar />
 
       <ReminderSettings lastCorrectDate={data?.lastSeenDate ?? null} />
-
-      <div className="mt-5 rounded-3xl border border-border bg-card p-6">
-        <label htmlFor="displayName" className="text-xs text-muted-foreground">
-          Display name
-        </label>
-        <input
-          id="displayName"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Your name"
-          className="mt-1 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
-        />
-        <button
-          type="button"
-          onClick={() => void onSave()}
-          disabled={busy || !name.trim()}
-          className="mt-3 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          Save
-        </button>
-      </div>
 
       <button
         type="button"
