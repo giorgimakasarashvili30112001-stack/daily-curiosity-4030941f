@@ -3,7 +3,6 @@ import { STREAK_SAVE_COST } from "./quiz.constants";
 const DAY_MS = 86400000;
 
 export type ProfileRow = {
-  display_name: string | null;
   streak_count: number;
   longest_streak: number;
   last_seen_date: string | null;
@@ -31,7 +30,7 @@ export const dayDiff = (from: string, to: string) =>
 export const shiftDay = (date: string, delta: number) =>
   new Date(Date.parse(`${date}T00:00:00Z`) + delta * DAY_MS).toISOString().slice(0, 10);
 
-const BASE_COLUMNS = "display_name, streak_count, longest_streak, last_seen_date, coins";
+const BASE_COLUMNS = "streak_count, longest_streak, last_seen_date, coins";
 const FULL_COLUMNS = `${BASE_COLUMNS}, saved_days, streak_anchor`;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -107,7 +106,6 @@ export async function settleStreak(
   ]);
 
   const row: ProfileRow = profile ?? {
-    display_name: null,
     streak_count: 0,
     longest_streak: 0,
     last_seen_date: null,

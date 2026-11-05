@@ -112,7 +112,6 @@ export type Database = {
         Row: {
           coins: number
           created_at: string
-          display_name: string | null
           id: string
           last_seen_date: string | null
           longest_streak: number
@@ -124,7 +123,6 @@ export type Database = {
         Insert: {
           coins?: number
           created_at?: string
-          display_name?: string | null
           id: string
           last_seen_date?: string | null
           longest_streak?: number
@@ -136,7 +134,6 @@ export type Database = {
         Update: {
           coins?: number
           created_at?: string
-          display_name?: string | null
           id?: string
           last_seen_date?: string | null
           longest_streak?: number

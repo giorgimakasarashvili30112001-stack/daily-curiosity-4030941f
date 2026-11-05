@@ -10,7 +10,6 @@ import { z } from "zod";
 
 /** Profile summary shown on the account/profile screen. */
 export type ProfileState = {
-  displayName: string | null;
   streak: number;
   longestStreak: number;
   lastSeenDate: string | null;
@@ -52,7 +51,6 @@ export const getProfile = createServerFn({ method: "GET" })
     ]);
 
     return {
-      displayName: settlement.profile.display_name ?? null,
       streak: settlement.streak,
       longestStreak: settlement.longestStreak,
       lastSeenDate: settlement.anchor ?? settlement.profile.last_seen_date ?? null,
@@ -61,29 +59,6 @@ export const getProfile = createServerFn({ method: "GET" })
       streakLost: settlement.streakLost,
       savedCount: count ?? 0,
     };
-  });
-
-/**
- * Updates (or clears) the signed-in user's display name.
- *
- * Params: `{ displayName }` — trimmed; an empty string clears the name
- * (stored as `null`).
- * Returns: `{ ok: true }`.
- * Side effects: upserts a row in `profiles` (display_name, updated_at).
- */
-export const updateDisplayName = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ displayName: z.string().max(60) }).parse(input))
-  .handler(async ({ data, context }) => {
-    const name = data.displayName.trim();
-    const { error } = await context.supabase
-      .from("profiles")
-      .upsert(
-        { id: context.userId, display_name: name || null, updated_at: new Date().toISOString() },
-        { onConflict: "id" },
-      );
-    if (error) throw error;
-    return { ok: true };
   });
 
 /**
